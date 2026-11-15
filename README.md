@@ -20,7 +20,7 @@ Pour lancer TerraPulse :
 
 Le fond de carte vient d'**Esri** et propose deux vues : **Plan** (carte claire) et **Satellite** (imagerie). Aucune clé ni aucun compte n'est nécessaire. Les tuiles standard de `tile.openstreetmap.org` ne sont volontairement pas utilisées, car ce service refuse les pages ouvertes en `file://` (aucun en-tête `Referer` n'est envoyé) et interdit l'usage de ses tuiles par une application distribuée.
 
-Il n'y a rien à installer ni à démarrer. Le script Python `telecharger_donnees_nasa.py` ne sert qu'à **mettre à jour les données** ; l'application fonctionne sans le relancer.
+Il n'y a rien à installer ni à démarrer. Le pipeline Python `telecharger_donnees_nasa.py` ne sert qu'à **mettre à jour les données** ; l'application fonctionne sans le relancer.
 
 > **English quick start.** Open `index.html` in a browser (keep `terrapulse_data.js` next to it) and click **EN** in the top-right corner. To refresh the NASA data, run `python telecharger_donnees_nasa.py`.
 
@@ -28,7 +28,7 @@ Il n'y a rien à installer ni à démarrer. Le script Python `telecharger_donnee
 
 ## 1. Ce que fait le projet, en bref
 
-1. Un script Python télécharge trois variables réelles pour Bukavu, de 2021 à 2025 : la pluie, l'humidité du sol et l'état de la végétation (NDVI).
+1. Un pipeline Python télécharge trois variables réelles pour Bukavu, de 2021 à 2025 : la pluie, l'humidité du sol et l'état de la végétation (NDVI).
 2. Une page web affiche l'évolution de ces trois variables, au pas de temps choisi (jour, semaine, mois ou année).
 3. Sous chaque graphique, la page explique ce que montre la courbe et ce que cela implique pour les versants de Bukavu.
 4. Un modèle statistique apprend le cycle des saisons sur l'historique et prévoit les 3, 6 ou 12 mois suivants, avec une marge d'incertitude.
@@ -53,20 +53,68 @@ Les quatre piliers du projet correspondent ainsi à :
 
 | Fichier | Rôle |
 | --- | --- |
-| `index.html` | **L'application, fichier principal.** À ouvrir dans un navigateur. |
-| `terrapulse_data.js` | Les données NASA lues par l'application. Généré par le script, ne pas modifier à la main. |
-| `telecharger_donnees_nasa.py` | Le script qui télécharge les données NASA et produit les fichiers ci-dessous. |
+| `index.html` | **L'application, fichier principal.** Structure de la page et chargement des scripts. À ouvrir dans un navigateur. |
+| `src/` | Le code de l'application web, découpé en couches (`core`, `data`, `presentation`). |
+| `terrapulse_data.js` | Les données NASA lues par l'application. Généré par le pipeline, ne pas modifier à la main. |
+| `telecharger_donnees_nasa.py` | Point d'entrée du pipeline qui télécharge les données NASA et produit les fichiers ci-dessous. |
+| `terrapulse_pipeline/` | Le pipeline Python, découpé en couches (`domain`, `data`, `usecases`). |
 | `bukavu_terrapulse_nasa_2021_2025.csv` | Données mensuelles (pluie, humidité, NDVI). |
 | `bukavu_terrapulse_nasa_journalier_2021_2025.csv` | Pluie et humidité du sol, jour par jour. |
 | `bukavu_terrapulse_nasa_ndvi_16j_2021_2025.csv` | NDVI, une valeur tous les 16 jours. |
 | `cache_modis/` | Réponses brutes du serveur MODIS, conservées pour ne pas tout retélécharger. |
 | `cache_carte/` | Relief SRTM (15 Mo), grille des cellules et limites des communes, conservés de la même façon. |
-| `TerraPulse.ipynb` | Ancien notebook Colab. Sa seconde cellule fabriquait des données **simulées** : ne plus l'utiliser comme source. |
+| `TerraPulse.ipynb` | Ancien notebook Colab (archive, 179 lignes de code). Sa seconde cellule fabriquait des données **simulées** : ne plus l'utiliser comme source. |
 | `gemini-code-*.md` | Feuille de route du projet. |
+| `.gitignore` | Fichiers générés à ne pas versionner (`__pycache__`, `.pyc`). |
 
 ---
 
-## 3. Comment l'utiliser
+## 3. Architecture du code
+
+Les deux parties du projet suivent les mêmes règles : **les dépendances pointent vers l'intérieur**, le domaine ne connaît ni le navigateur ni le réseau, et chaque fichier de code reste **sous 400 lignes**.
+
+### Application web (`src/`)
+
+`index.html` ne contient plus que la structure HTML et les balises `<script>`. Les scripts sont **classiques** (pas de modules ES), chargés dans l'ordre et rangés sous l'espace de noms `window.TerraPulse` : c'est ce qui permet au double-clic `file://` de continuer à fonctionner, contrairement aux imports ES bloqués par les navigateurs.
+
+| Couche | Dossier | Rôle |
+| --- | --- | --- |
+| **Domain / Core** | `src/core/` | Règles pures : dates, statistiques, agrégation, modèle saisonnier, analyse, seuils de la carte, rapport d'export. Aucun accès au DOM, à Leaflet ou à Chart.js. |
+| **Data** | `src/data/` | Adaptateurs : lecture de `terrapulse_data.js`, import CSV, sérialisation CSV/JSON. Ils implémentent les besoins du domaine. |
+| **Presentation** | `src/presentation/` | Traductions FR/EN, graphiques, carte, tableaux, diagnostic, filtres, exports, et le contrôleur qui orchestre le tout. |
+| **Composition** | `src/main.js` | Seul fichier qui connaît toutes les couches : il crée les objets et les relie (injection de dépendances). |
+
+Le contrôleur `src/presentation/appController.js` lit les filtres, appelle le cas d'utilisation du domaine `construireTableauDeBord()`, puis passe le résultat aux vues. Une vue ne sait pas d'où viennent les données ; un dépôt ne sait pas comment elles sont affichées.
+
+### Pipeline Python (`terrapulse_pipeline/`)
+
+| Couche | Dossier | Rôle |
+| --- | --- | --- |
+| **Domain** | `terrapulse_pipeline/domain/` | Géométrie, NDVI, relief/pente, indice de vulnérabilité. Fonctions pures. |
+| **Data** | `terrapulse_pipeline/data/` | NASA POWER, MODIS, SRTM, Nominatim, cache, HTTP, écriture des CSV/JS. |
+| **Use cases** | `terrapulse_pipeline/usecases/` | Chargement des observations, préparation du NDVI, construction de la carte, export. |
+| **Présentation** | `terrapulse_pipeline/cli.py` | Déroulé en quatre étapes et messages de la console. |
+| **Entrée** | `telecharger_donnees_nasa.py` | Point d'entrée mince : `python telecharger_donnees_nasa.py`. |
+
+### Vérifier la structure
+
+```bash
+# Syntaxe JavaScript (un fichier à la fois)
+find src -name '*.js' -exec node --check {} \;
+
+# Syntaxe Python
+python3 -m compileall terrapulse_pipeline
+
+# Aucun fichier de code au-dessus de 400 lignes
+find src terrapulse_pipeline -type f \( -name '*.js' -o -name '*.py' \) -exec wc -l {} + | sort -n
+wc -l index.html telecharger_donnees_nasa.py
+```
+
+Le notebook `TerraPulse.ipynb` est une archive d'exploration : il contient 179 lignes de code (le reste est la structure JSON et les sorties), n'est pas chargé par l'application et n'est pas maintenu.
+
+---
+
+## 4. Comment l'utiliser
 
 ### Ouvrir l'application
 
@@ -78,16 +126,17 @@ Double-cliquez sur `index.html` (voir « Quel fichier ouvrir ? » en haut de ce 
 python telecharger_donnees_nasa.py
 ```
 
-- Aucune bibliothèque à installer : le script n'utilise que Python standard (version 3.8 ou plus).
+- Aucune bibliothèque à installer : le pipeline n'utilise que Python standard (version 3.8 ou plus).
 - Aucun compte ni clé : les deux services NASA utilisés sont publics.
-- Le premier téléchargement prend 5 à 15 minutes, car le serveur MODIS est lent et renvoie parfois des erreurs passagères. Le script réessaie tout seul.
-- Si le script s'arrête sur une erreur réseau, relancez-le : il reprend là où il s'était arrêté grâce aux dossiers `cache_modis/` et `cache_carte/`. Une fois tout en cache, une relance prend quelques secondes.
-- Si seules les données de la carte échouent, le script le signale et produit quand même le reste : l'application s'ouvre alors sans carte.
-- Pour changer la période ou la zone, modifiez les paramètres en haut du script (`DEBUT`, `FIN`, `LAT`, `LON`, `KM_AUTOUR`, `COMMUNES`). Supprimez les deux dossiers de cache si vous changez la zone.
+- Le premier téléchargement prend 5 à 15 minutes, car le serveur MODIS est lent et renvoie parfois des erreurs passagères. Le pipeline réessaie tout seul.
+- Si le pipeline s'arrête sur une erreur réseau, relancez-le : il reprend là où il s'était arrêté grâce aux dossiers `cache_modis/` et `cache_carte/`. Une fois tout en cache, une relance prend quelques secondes.
+- Si seules les données de la carte échouent, le pipeline le signale et produit quand même le reste : l'application s'ouvre alors sans carte.
+- Pour changer la période ou la zone, modifiez les paramètres dans `terrapulse_pipeline/config.py` (`START_DATE`, `END_DATE`, `LAT`, `LON`, `KM_AROUND`, `COMMUNES`). Supprimez les deux dossiers de cache si vous changez la zone.
+- Si Python n'embarque pas de certificats racine (fréquent sur macOS), le pipeline utilise automatiquement le bundle du système, ou `certifi` s'il est installé. La vérification TLS reste active.
 
 ---
 
-## 4. D'où viennent les données
+## 5. D'où viennent les données
 
 | Variable | Source | Résolution | Ce que c'est exactement |
 | --- | --- | --- | --- |
@@ -101,7 +150,7 @@ Points de coordonnées : centre de Bukavu (latitude −2,51, longitude 28,85).
 
 ### Traitement du NDVI
 
-Le script récupère tous les pixels dans un carré de 10 km de côté autour de Bukavu, puis :
+Le pipeline récupère tous les pixels dans un carré de 10 km de côté autour de Bukavu, puis :
 
 - écarte les pixels nuageux ou douteux, grâce à la bande de fiabilité fournie avec le produit ;
 - écarte les pixels du lac Kivu (ceux dont le NDVI médian est inférieur à 0,10) ;
@@ -117,7 +166,7 @@ Le script récupère tous les pixels dans un carré de 10 km de côté autour de
 
 ---
 
-## 5. Comment fonctionne l'application
+## 6. Comment fonctionne l'application
 
 ### Les langues : français et anglais
 
@@ -131,9 +180,9 @@ Trois éléments ne changent pas avec le bouton :
 
 - **Les sélecteurs de date et le bouton « Choisir un fichier »** sont dessinés par le navigateur, dans sa propre langue.
 - **Les noms de colonnes des fichiers exportés** restent identiques dans les deux langues, pour que les fichiers gardent toujours la même structure. Les lignes de commentaire et les niveaux de risque, eux, sont traduits.
-- **Le script Python** affiche ses messages en français.
+- **Le pipeline Python** affiche ses messages en français.
 
-Pour ajouter une langue (par exemple le swahili), il suffit de copier le bloc `en` du dictionnaire `I18N` au début du script de la page, de le traduire, et d'ajouter un bouton portant `data-lang`.
+Pour ajouter une langue (par exemple le swahili) : copiez `src/presentation/i18n/en.js` en `sw.js`, traduisez les valeurs et remplacez `TP.i18nDictionaries.en` par `.sw`. Ajoutez le fichier dans `index.html` **avant** `i18n/index.js`, puis ajoutez un bouton `.tp-lang` avec `data-lang="sw"`. Le reste (mémorisation, ancre `#sw`, nombres) est automatique.
 
 ### Les filtres
 
@@ -194,7 +243,7 @@ Pour chaque mois prévu, l'application calcule la probabilité de franchir chaqu
 
 ### La carte des versants vulnérables
 
-La zone de 10 km sur 10 km est découpée en cellules de 231 m (la grille du satellite MODIS). Pour chacune des 1 433 cellules terrestres, le script calcule :
+La zone de 10 km sur 10 km est découpée en cellules de 231 m (la grille du satellite MODIS). Pour chacune des 1 433 cellules terrestres, le pipeline calcule :
 
 - la **pente moyenne**, à partir du relief SRTM à 30 m ;
 - le **NDVI moyen des 12 derniers mois** de la période ;
@@ -232,7 +281,7 @@ Le bas de la colonne de gauche permet de remplacer les données par un CSV mensu
 
 ---
 
-## 6. Limites à connaître avant de présenter le projet
+## 7. Limites à connaître avant de présenter le projet
 
 - **Les niveaux de risque ne sont pas validés.** Ils n'ont été comparés à aucun inventaire de glissements de terrain survenus à Bukavu. Ils indiquent des conditions favorables, pas une probabilité de catastrophe.
 - **Les seuils sont des hypothèses de travail**, pas des valeurs mesurées sur les sols de Bukavu.
@@ -247,7 +296,7 @@ Le bas de la colonne de gauche permet de remplacer les données par un CSV mensu
 
 ---
 
-## 7. Idées d'amélioration
+## 8. Idées d'amélioration
 
 ### Priorité haute : ce qui renforcerait le plus le projet
 
@@ -273,16 +322,16 @@ Le bas de la colonne de gauche permet de remplacer les données par un CSV mensu
 
 ### Technique
 
-14. **Mise à jour automatique.** Lancer le script chaque mois (tâche planifiée ou GitHub Actions) pour que l'application reste à jour sans intervention.
+14. **Mise à jour automatique.** Lancer le pipeline chaque mois (tâche planifiée ou GitHub Actions) pour que l'application reste à jour sans intervention.
 15. **Fonctionner hors connexion.** Inclure Tailwind, Chart.js et Leaflet dans le dossier, et prévoir un fond de carte local : utile à Bukavu quand la connexion est instable.
 16. **Mettre en ligne.** Publier le dossier sur GitHub Pages pour obtenir une adresse à partager avec le jury.
-17. **Créer un dépôt Git.** Le dossier n'est pas versionné : une erreur de manipulation peut faire perdre du travail.
-18. **Un vrai backend** (FastAPI), comme prévu dans la feuille de route, seulement si l'application doit servir plusieurs villes ou des données à la demande. Pour une seule zone, le script actuel suffit.
-19. **Étendre à d'autres villes du Kivu** (Goma, Uvira, Kalehe, touchée par les coulées de mai 2023) en changeant les coordonnées dans le script.
+17. **Publier le dépôt Git.** Le dossier est déjà versionné ; ajoutez un remote et poussez régulièrement pour ne pas perdre de travail.
+18. **Un vrai backend** (FastAPI), comme prévu dans la feuille de route, seulement si l'application doit servir plusieurs villes ou des données à la demande. Pour une seule zone, le pipeline actuel suffit.
+19. **Étendre à d'autres villes du Kivu** (Goma, Uvira, Kalehe, touchée par les coulées de mai 2023) en changeant les coordonnées dans `terrapulse_pipeline/config.py`.
 
 ---
 
-## 8. Citer les sources
+## 9. Citer les sources
 
 - NASA POWER Project, NASA Langley Research Center : https://power.larc.nasa.gov
 - Didan, K. (2021). *MODIS/Terra Vegetation Indices 16-Day L3 Global 250m SIN Grid V061*. NASA EOSDIS Land Processes DAAC. https://doi.org/10.5067/MODIS/MOD13Q1.061
