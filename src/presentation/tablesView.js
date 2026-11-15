@@ -25,7 +25,7 @@
                 bloc.append(
                     el('p', 'text-[10px] font-semibold uppercase tracking-wide text-slate-400',
                         i18n.t(`fc.model.formula.${index}`)),
-                    el('p', 'mt-1 overflow-x-auto font-mono text-xs sm:text-sm text-emerald-200 whitespace-pre', formule),
+                    el('p', 'tp-model-equation mt-1 overflow-x-auto font-mono text-xs sm:text-sm whitespace-pre', formule),
                 );
                 cible.append(bloc);
             }

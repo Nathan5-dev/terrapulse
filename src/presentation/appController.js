@@ -156,6 +156,7 @@
 
             dom.$('btnCsv').addEventListener('click', () => exportation.exporterCsv(dernierRendu, dataset));
             dom.$('btnJson').addEventListener('click', () => exportation.exporterJson(dernierRendu, dataset));
+            dom.$('btnPdf').addEventListener('click', () => exportation.exporterPdf(dernierRendu, dataset));
 
             dom.$('csvFileInput').addEventListener('change', e => {
                 const fichier = e.target.files[0];

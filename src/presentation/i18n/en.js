@@ -36,8 +36,10 @@
         'thr.note.nasa': 'Rainfall and NDVI: thresholds from the project brief. Soil moisture: the fixed 75% threshold does not suit the MERRA-2 measure, which exceeds it almost all year; by default it is replaced by the 80th percentile of observed months. Editable.',
         'thr.note.csv': 'Default soil moisture threshold: 80th percentile of the months in the imported file. Editable.',
 
-        'export.title': 'Export', 'export.desc': 'Filtered data at the chosen time step, forecasts and cited sources.',
+        'export.title': 'Export', 'export.desc': 'Filtered data at the chosen time step, forecasts, charts and map.',
+        'export.pdf': 'Export as PDF',
         'export.csv': 'Download CSV', 'export.json': 'Download JSON',
+        'export.pdf': 'Download PDF',
         'export.zone': 'Bukavu / Lake Kivu (DRC)',
         'export.model': 'Monthly. Monthly seasonality + linear trend when significant; bounds = 80% prediction interval. Risk levels not validated against a field inventory.',
         'export.head': o => `exported on ${o.d}`,

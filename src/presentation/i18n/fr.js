@@ -36,8 +36,10 @@
         'thr.note.nasa': 'Pluie et NDVI : seuils du cahier des charges. Humidité : le seuil fixe de 75 % ne convient pas à la mesure MERRA-2, qui le dépasse presque toute l\'année ; il est remplacé par défaut par le 80e centile des mois observés. Modifiable.',
         'thr.note.csv': 'Seuil d\'humidité par défaut : 80e centile des mois du fichier importé. Modifiable.',
 
-        'export.title': 'Exporter', 'export.desc': 'Données filtrées au pas de temps choisi, prévisions et sources citées.',
+        'export.title': 'Exporter', 'export.desc': 'Données filtrées au pas de temps choisi, prévisions, graphiques et carte.',
+        'export.pdf': 'Exporter en PDF',
         'export.csv': 'Télécharger CSV', 'export.json': 'Télécharger JSON',
+        'export.pdf': 'Télécharger PDF',
         'export.zone': 'Bukavu / Lac Kivu (RDC)',
         'export.model': 'Mensuelles. Saisonnalité mensuelle + tendance linéaire si significative ; bornes = intervalle de prévision à 80 %. Niveaux de risque non validés contre un inventaire de terrain.',
         'export.head': o => `export du ${o.d}`,

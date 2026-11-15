@@ -8,6 +8,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <!-- Données NASA réelles, générées par telecharger_donnees_nasa.py -->
     <script src="terrapulse_data.js"></script>
     <style>
@@ -34,6 +36,7 @@
         :root[data-theme="light"] .tp-pill { color: #334155; border-color: #94a3b8; }
         :root[data-theme="light"] .tp-pill[aria-pressed="true"] { color: #fff; background: #059669; border-color: #059669; }
         :root[data-theme="light"] #carte { background: #e2e8f0; }
+        .tp-model-equation { color: #047857; }
         .tp-input { width: 100%; background: var(--input); border: 1px solid var(--line); border-radius: 0.75rem;
                     padding: 0.5rem 0.75rem; font-size: 0.875rem; color: var(--text); }
         .tp-input:focus { outline: none; border-color: #10b981; }
@@ -160,6 +163,7 @@
                     <div class="grid grid-cols-2 gap-3">
                         <button id="btnCsv" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-3 rounded-xl text-sm" data-i18n="export.csv"></button>
                         <button id="btnJson" class="bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-3 rounded-xl text-sm border border-slate-600" data-i18n="export.json"></button>
+                        <button id="btnPdf" class="col-span-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-3 rounded-xl text-sm" data-i18n="export.pdf"></button>
                     </div>
                 </section>
 
