@@ -18,6 +18,8 @@ Pour lancer TerraPulse :
 2. Laissez `terrapulse_data.js` dans le même dossier : c'est lui qui contient les données.
 3. Gardez une connexion internet, pour le fond de carte et les bibliothèques d'affichage.
 
+Le fond de carte vient d'**Esri** et propose deux vues : **Plan** (carte claire) et **Satellite** (imagerie). Aucune clé ni aucun compte n'est nécessaire. Les tuiles standard de `tile.openstreetmap.org` ne sont volontairement pas utilisées, car ce service refuse les pages ouvertes en `file://` (aucun en-tête `Referer` n'est envoyé) et interdit l'usage de ses tuiles par une application distribuée.
+
 Il n'y a rien à installer ni à démarrer. Le script Python `telecharger_donnees_nasa.py` ne sert qu'à **mettre à jour les données** ; l'application fonctionne sans le relancer.
 
 > **English quick start.** Open `index.html` in a browser (keep `terrapulse_data.js` next to it) and click **EN** in the top-right corner. To refresh the NASA data, run `python telecharger_donnees_nasa.py`.
@@ -68,7 +70,7 @@ Les quatre piliers du projet correspondent ainsi à :
 
 ### Ouvrir l'application
 
-Double-cliquez sur `index.html` (voir « Quel fichier ouvrir ? » en haut de ce document). Il faut que `terrapulse_data.js` soit dans le même dossier, et une connexion internet pour charger les bibliothèques d'affichage (Tailwind CSS, Chart.js, Leaflet) et le fond de carte OpenStreetMap.
+Double-cliquez sur `index.html` (voir « Quel fichier ouvrir ? » en haut de ce document). Il faut que `terrapulse_data.js` soit dans le même dossier, et une connexion internet pour charger les bibliothèques d'affichage (Tailwind CSS, Chart.js, Leaflet) et le fond de carte Esri.
 
 ### Mettre à jour les données
 
@@ -206,7 +208,7 @@ indice = score de pente × (0,5 + 0,5 × manque de végétation)
 - Le manque de végétation vaut 0 pour un NDVI d'au moins 0,60 et 1 pour un NDVI de 0,30 ou moins.
 - Une pente forte bien boisée obtient donc 0,5 ; la même pente nue obtient 1.
 
-Trois boutons changent la couche affichée : vulnérabilité, pente ou végétation. Au survol, chaque cellule donne ses valeurs et son altitude. Le lac Kivu est exclu (cellules sans végétation, ou planes à l'altitude du lac).
+Trois boutons changent la couche affichée : vulnérabilité, pente ou végétation. Deux autres boutons changent le fond : **Plan** (carte topographique claire) ou **Satellite** (imagerie aérienne). Au survol, chaque cellule donne ses valeurs et son altitude. Le lac Kivu est exclu (cellules sans végétation, ou planes à l'altitude du lac).
 
 Sous la carte, un tableau compare les trois communes. Résultats actuels :
 
@@ -286,7 +288,9 @@ Le bas de la colonne de gauche permet de remplacer les données par un CSV mensu
 - Didan, K. (2021). *MODIS/Terra Vegetation Indices 16-Day L3 Global 250m SIN Grid V061*. NASA EOSDIS Land Processes DAAC. https://doi.org/10.5067/MODIS/MOD13Q1.061
 - ORNL DAAC, MODIS and VIIRS Land Products Global Subsetting and Visualization Tool : https://modis.ornl.gov
 - NASA Shuttle Radar Topography Mission (SRTM), 1 arc-seconde, distribué par les Terrain Tiles (Mapzen, AWS Open Data) : https://registry.opendata.aws/terrain-tiles
-- Limites administratives et fond de carte : © contributeurs OpenStreetMap, licence ODbL : https://www.openstreetmap.org/copyright
+- Limites administratives : © contributeurs OpenStreetMap, licence ODbL : https://www.openstreetmap.org/copyright
+- Fond de carte Plan : © Esri, HERE, Garmin, USGS, contributeurs OpenStreetMap (World Topographic Map) : https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer
+- Fond de carte Satellite : © Esri, Vantor, Earthstar Geographics, communauté des utilisateurs SIG (World Imagery) : https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer
 
 ---
 

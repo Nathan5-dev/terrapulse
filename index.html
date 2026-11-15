@@ -183,10 +183,17 @@
                     <h2 class="text-lg font-semibold text-white" data-i18n="map.title"></h2>
                     <p id="carteSousTitre" class="text-xs text-slate-400"></p>
                 </div>
-                <div class="flex flex-wrap gap-2" role="group">
-                    <button class="tp-pill tp-couche" data-couche="indice" aria-pressed="true" data-i18n="map.btn.indice"></button>
-                    <button class="tp-pill tp-couche" data-couche="pente" aria-pressed="false" data-i18n="map.btn.pente"></button>
-                    <button class="tp-pill tp-couche" data-couche="ndvi" aria-pressed="false" data-i18n="map.btn.ndvi"></button>
+                <div class="flex flex-wrap items-center gap-2">
+                    <div class="flex flex-wrap gap-2" role="group" aria-label="Couche affichée / Displayed layer">
+                        <button class="tp-pill tp-couche" data-couche="indice" aria-pressed="true" data-i18n="map.btn.indice"></button>
+                        <button class="tp-pill tp-couche" data-couche="pente" aria-pressed="false" data-i18n="map.btn.pente"></button>
+                        <button class="tp-pill tp-couche" data-couche="ndvi" aria-pressed="false" data-i18n="map.btn.ndvi"></button>
+                    </div>
+                    <span class="hidden sm:block w-px h-6 bg-slate-600" aria-hidden="true"></span>
+                    <div class="flex flex-wrap gap-2" role="group" aria-label="Fond de carte / Basemap">
+                        <button class="tp-pill tp-fond" data-fond="plan" aria-pressed="true" data-i18n="map.fond.plan"></button>
+                        <button class="tp-pill tp-fond" data-fond="satellite" aria-pressed="false" data-i18n="map.fond.satellite"></button>
+                    </div>
                 </div>
             </div>
             <p id="carteSaison" class="text-sm text-slate-200 mb-3"></p>
@@ -325,7 +332,9 @@ fr: {
     'map.src.pente': 'NASA SRTM 1 arc-seconde (environ 30 m), tuiles HGT des Terrain Tiles Mapzen / AWS Open Data — https://registry.opendata.aws/terrain-tiles',
     'map.src.ndvi': 'NASA MODIS/Terra MOD13Q1 v6.1, moyenne par cellule de 231 m — https://doi.org/10.5067/MODIS/MOD13Q1.061',
     'map.src.communes': 'Limites administratives © contributeurs OpenStreetMap (ODbL), via Nominatim',
-    'map.attrib': '&copy; contributeurs OpenStreetMap',
+    'map.fond.plan': 'Plan', 'map.fond.satellite': 'Satellite',
+    'map.attrib.plan': 'Fond de carte &copy; Esri, HERE, Garmin, USGS, &copy; contributeurs OpenStreetMap',
+    'map.attrib.satellite': 'Imagerie &copy; Esri, Vantor, Earthstar Geographics, et la communauté SIG',
     'map.where': 'Où agir en priorité. ',
     'map.season.none': 'Aucun mois de la prévision n\'atteint la vigilance glissement de terrain. Les zones foncées restent celles à surveiller dès le retour des fortes pluies.',
     'map.season': o => `La prévision place ${o.m} au niveau « ${o.l} » pour les glissements de terrain. Ces mois-là, les zones les plus foncées de la carte sont à inspecter en premier.`,
@@ -446,7 +455,9 @@ en: {
     'map.src.pente': 'NASA SRTM 1 arc-second (about 30 m), HGT tiles from Mapzen Terrain Tiles / AWS Open Data — https://registry.opendata.aws/terrain-tiles',
     'map.src.ndvi': 'NASA MODIS/Terra MOD13Q1 v6.1, mean per 231 m cell — https://doi.org/10.5067/MODIS/MOD13Q1.061',
     'map.src.communes': 'Administrative boundaries © OpenStreetMap contributors (ODbL), via Nominatim',
-    'map.attrib': '&copy; OpenStreetMap contributors',
+    'map.fond.plan': 'Map', 'map.fond.satellite': 'Satellite',
+    'map.attrib.plan': 'Basemap &copy; Esri, HERE, Garmin, USGS, &copy; OpenStreetMap contributors',
+    'map.attrib.satellite': 'Imagery &copy; Esri, Vantor, Earthstar Geographics, and the GIS User Community',
     'map.where': 'Where to act first. ',
     'map.season.none': 'No forecast month reaches the landslide watch level. The darkest areas remain the ones to monitor as soon as heavy rain returns.',
     'map.season': o => `The forecast puts ${o.m} at the “${o.l}” level for landslides. In those months, the darkest areas of the map should be inspected first.`,
@@ -1025,7 +1036,7 @@ const COUCHES = {
     pente:  { bornes: [5, 10, 15, 25],      couleurs: ['#cde2fb', '#86b6ef', '#3987e5', '#1c5cab', '#0d366b'] },
     ndvi:   { bornes: [0.3, 0.4, 0.5, 0.6], couleurs: ['#e3f3da', '#b0dc9c', '#63b35d', '#22803a', '#0b4f20'] },
 };
-const carteEtat = { map: null, tuiles: null, cellules: [], couche: 'indice', prete: false };
+const carteEtat = { map: null, tuiles: null, cellules: [], couche: 'indice', fond: 'plan', prete: false };
 
 function classeDe(couche, v) {
     const b = COUCHES[couche].bornes;
@@ -1033,6 +1044,24 @@ function classeDe(couche, v) {
     while (i < b.length && v >= b[i]) i++;
     return i;
 }
+
+/* Fonds de carte.
+ * On n'utilise pas tile.openstreetmap.org : ce service refuse les pages ouvertes
+ * en file:// (aucun Referer envoyé, d'où « Access blocked ») et son règlement
+ * interdit l'usage de ses tuiles par une application distribuée. CARTO exige
+ * désormais une clé API. Esri publie ces fonds sans clé, y compris en file://. */
+const FONDS_CARTE = {
+    plan: {
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+        options: { maxZoom: 18 },
+        attribution: 'map.attrib.plan',
+    },
+    satellite: {
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        options: { maxZoom: 18 },
+        attribution: 'map.attrib.satellite',
+    },
+};
 
 function initialiserCarte() {
     const C = window.TERRAPULSE_DATA && window.TERRAPULSE_DATA.carte;
@@ -1042,7 +1071,7 @@ function initialiserCarte() {
         msg.dataset.i18n = !C ? 'map.nodata' : 'map.nolib';
         msg.textContent = t(msg.dataset.i18n);
         $('carte').replaceWith(msg);
-        section.querySelectorAll('.tp-couche, #communesTable, #communesTitre').forEach(e => e.classList.add('hidden'));
+        section.querySelectorAll('.tp-couche, .tp-fond, #communesTable, #communesTitre').forEach(e => e.classList.add('hidden'));
         return;
     }
     const G = C.grille, R = C.rayon_sinusoidal;
@@ -1085,19 +1114,32 @@ function initialiserCarte() {
         carteEtat.couche = b.dataset.couche;
         colorerCarte();
     }));
+    section.querySelectorAll('.tp-fond').forEach(b => b.addEventListener('click', () => {
+        section.querySelectorAll('.tp-fond').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+        carteEtat.fond = b.dataset.fond;
+        afficherFond();
+    }));
     carteEtat.prete = true;
     afficherTextesCarte();
+}
+
+/* Fond de carte courant : « plan » (clair) ou « satellite ». Recréé au changement
+ * de langue pour mettre l'attribution à jour. */
+function afficherFond() {
+    if (!carteEtat.prete) return;
+    const map = carteEtat.map, F = FONDS_CARTE[carteEtat.fond];
+    if (carteEtat.tuiles) { map.removeLayer(carteEtat.tuiles); carteEtat.tuiles = null; }
+    carteEtat.tuiles = L.tileLayer(F.url,
+        Object.assign({ attribution: t(F.attribution) }, F.options)).addTo(map);
+    carteEtat.tuiles.bringToBack();
 }
 
 /* Tout ce qui est texte dans la section carte : refait à chaque changement de langue */
 function afficherTextesCarte() {
     if (!carteEtat.prete) return;
-    const C = window.TERRAPULSE_DATA.carte, map = carteEtat.map;
+    const C = window.TERRAPULSE_DATA.carte;
 
-    if (carteEtat.tuiles) map.removeLayer(carteEtat.tuiles);
-    carteEtat.tuiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-        { maxZoom: 17, attribution: t('map.attrib') }).addTo(map);
-    carteEtat.tuiles.bringToBack();
+    afficherFond();
 
     const table = $('communesTable');
     table.replaceChildren();
