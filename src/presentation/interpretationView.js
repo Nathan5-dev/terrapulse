@@ -64,7 +64,14 @@
                 el('strong', 'text-slate-100', i18n.t('interp.impact')),
                 document.createTextNode(impact),
             );
-            cible.append(p1, p2);
+            const p3 = el('p');
+            p3.className = 'rounded-lg border border-slate-700 bg-slate-900 px-3 py-2';
+            p3.append(
+                el('strong', 'block mb-1 text-emerald-200', i18n.t('interp.model')),
+                document.createTextNode(
+                    i18n.t('interp.model.' + varKey) + i18n.t('interp.model.fit')),
+            );
+            cible.append(p1, p2, p3);
         }
 
         return { rendre };

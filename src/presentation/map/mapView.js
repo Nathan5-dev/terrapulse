@@ -57,6 +57,7 @@
                     [versLatLon(x0, y1), versLatLon(x1, y1), versLatLon(x1, y0), versLatLon(x0, y0)],
                     { stroke: false, fillOpacity: 0.72 },
                 ).addTo(carte);
+                const [latC, lonC] = versLatLon(x0 + G.cs / 2, y0 + G.cs / 2);
 
                 // Contenu construit au survol, donc dans la langue courante.
                 poly.bindTooltip(() => {
@@ -73,6 +74,10 @@
                     ligne(i18n.t('map.tip.pente', { v: fmt(C.pente[p], 1) + '°' }));
                     ligne(i18n.t('map.tip.ndvi', { v: fmt(C.ndvi[p], 2) }));
                     ligne(i18n.t('map.tip.alt', { v: fmt(C.altitude[p], 0) + ' m' }));
+                    ligne(i18n.t('map.tip.pos', {
+                        lat: fmt(latC, 5) + '°',
+                        lon: fmt(lonC, 5) + '°',
+                    }));
                     return boite;
                 }, { sticky: true });
 
