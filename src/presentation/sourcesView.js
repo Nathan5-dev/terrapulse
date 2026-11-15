@@ -16,6 +16,11 @@
             document.querySelectorAll('[data-i18n]').forEach(e => {
                 e.textContent = i18n.t(e.dataset.i18n);
             });
+            document.querySelectorAll('[data-i18n-title]').forEach(e => {
+                const label = i18n.t(e.dataset.i18nTitle);
+                e.title = label;
+                e.setAttribute('aria-label', label);
+            });
             document.querySelectorAll('.tp-lang').forEach(b => {
                 b.setAttribute('aria-pressed', String(b.dataset.lang === i18n.getLangue()));
             });
