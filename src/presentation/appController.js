@@ -22,6 +22,7 @@
         function demarrer() {
             i18n.setLangue(i18n.langueInitiale(
                 global.location.hash, global.localStorage, global.navigator.language));
+            appliquerTheme(lireTheme());
 
             donneesCarte = datasetRepository.mapData ? datasetRepository.mapData() : null;
             dataset = datasetRepository.load();
@@ -34,6 +35,28 @@
 
             cartePrete = carte.initialiser(donneesCarte);
             if (cartePrete && donneesCarte) panneauxCarte.rendre(donneesCarte);
+            majBoutonTheme();
+        }
+
+        function lireTheme() {
+            try { return global.localStorage.getItem('terrapulse-theme') || 'dark'; }
+            catch (e) { return 'dark'; }
+        }
+
+        function appliquerTheme(themeNom) {
+            document.documentElement.dataset.theme = themeNom;
+            theme.setMode(themeNom);
+        }
+
+        function majBoutonTheme() {
+            const clair = document.documentElement.dataset.theme === 'light';
+            const bouton = dom.$('btnTheme');
+            const label = i18n.t(clair ? 'theme.dark' : 'theme.light');
+            bouton.setAttribute('aria-pressed', String(clair));
+            bouton.title = label;
+            bouton.setAttribute('aria-label', label);
+            dom.$('themeIcon').textContent = clair ? '🌙' : '☀️';
+            dom.$('themeLabel').textContent = label;
         }
 
         function initialiserFiltres() {
@@ -94,6 +117,7 @@
             try { global.localStorage.setItem('terrapulse-lang', langue); } catch (e) { /* stockage indisponible */ }
 
             sources.appliquerTextes();
+            majBoutonTheme();
             sources.rendre(dataset);
             rendre();
             carte.rafraichirTextes();
@@ -120,6 +144,14 @@
 
             document.querySelectorAll('.tp-lang').forEach(b => {
                 b.addEventListener('click', () => changerLangue(b.dataset.lang));
+            });
+
+            dom.$('btnTheme').addEventListener('click', () => {
+                const prochain = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+                appliquerTheme(prochain);
+                try { global.localStorage.setItem('terrapulse-theme', prochain); } catch (e) { /* stockage indisponible */ }
+                majBoutonTheme();
+                rendre();
             });
 
             dom.$('btnCsv').addEventListener('click', () => exportation.exporterCsv(dernierRendu, dataset));

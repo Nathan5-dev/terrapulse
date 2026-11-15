@@ -33,5 +33,12 @@
         ndvi: ['#e3f3da', '#b0dc9c', '#63b35d', '#22803a', '#0b4f20'],
     };
 
-    TP.presentation.theme = { COLORS, CHART_BINDINGS, RISK_BADGES, MAP_PALETTES };
+    function setMode(mode) {
+        const clair = mode === 'light';
+        Object.assign(COLORS, clair
+            ? { grid: '#cbd5e1', axis: '#475569', ink: '#334155', seuil: '#0f172a', cross: '#64748b' }
+            : { grid: '#334155', axis: '#94a3b8', ink: '#cbd5e1', seuil: '#e2e8f0', cross: '#64748b' });
+    }
+
+    TP.presentation.theme = { COLORS, CHART_BINDINGS, RISK_BADGES, MAP_PALETTES, setMode };
 })(window);

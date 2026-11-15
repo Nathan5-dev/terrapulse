@@ -18,6 +18,8 @@
             couche: 'indice',
             donnees: null,
             prete: false,
+            positionMarker: null,
+            accuracyCircle: null,
         };
 
         function initialiser(C) {
@@ -118,6 +120,50 @@
                 const nom = b.dataset.fond;
                 b.title = i18n.t(`map.fond.${nom}`);
                 b.setAttribute('aria-label', i18n.t(`map.fond.${nom}`));
+            });
+            const btnPosition = dom.$('btnMaPosition');
+            btnPosition.title = i18n.t('map.location');
+            btnPosition.setAttribute('aria-label', i18n.t('map.location'));
+            btnPosition.addEventListener('click', () => {
+                if (!navigator.geolocation) {
+                    window.alert(i18n.t('map.location.error'));
+                    return;
+                }
+                btnPosition.disabled = true;
+                navigator.geolocation.getCurrentPosition(position => {
+                    const { latitude, longitude, accuracy } = position.coords;
+                    if (!etat.positionMarker) {
+                        etat.positionMarker = L.circleMarker([latitude, longitude], {
+                            radius: 8,
+                            color: '#fff',
+                            weight: 3,
+                            fillColor: '#2563eb',
+                            fillOpacity: 1,
+                        }).addTo(carte);
+                        etat.positionMarker.bindTooltip(i18n.t('map.location'), { direction: 'top' });
+                    } else {
+                        etat.positionMarker.setLatLng([latitude, longitude]);
+                    }
+                    if (etat.accuracyCircle) carte.removeLayer(etat.accuracyCircle);
+                    etat.positionMarker.setRadius(8);
+                    etat.positionMarker.setTooltipContent(i18n.t('map.location'));
+                    carte.flyTo([latitude, longitude], Math.max(carte.getZoom(), 14), {
+                        animate: true,
+                        duration: 0.75,
+                    });
+                    etat.accuracyCircle = L.circle([latitude, longitude], {
+                        radius: accuracy,
+                        color: '#2563eb',
+                        weight: 1,
+                        fillColor: '#3b82f6',
+                        fillOpacity: 0.12,
+                        interactive: false,
+                    }).addTo(carte);
+                    btnPosition.disabled = false;
+                }, () => {
+                    window.alert(i18n.t('map.location.error'));
+                    btnPosition.disabled = false;
+                }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
             });
 
             etat.prete = true;

@@ -11,12 +11,34 @@
     <!-- Données NASA réelles, générées par telecharger_donnees_nasa.py -->
     <script src="terrapulse_data.js"></script>
     <style>
-        body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
-        .tp-input { width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 0.75rem;
-                    padding: 0.5rem 0.75rem; font-size: 0.875rem; color: #e2e8f0; }
+        :root { color-scheme: dark; --page: #0f172a; --card: #1e293b; --raised: #334155; --line: #334155;
+                --text: #f1f5f9; --muted: #94a3b8; --soft: #cbd5e1; --input: #0f172a; }
+        :root[data-theme="light"] { color-scheme: light; --page: #f1f5f9; --card: #fff; --raised: #e2e8f0; --line: #cbd5e1;
+                --text: #0f172a; --muted: #475569; --soft: #334155; --input: #fff; }
+        body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--page); color: var(--text); }
+        .tp-card { background: var(--card); border-color: var(--line); }
+        .tp-input { background: var(--input); color: var(--text); border-color: var(--line); }
+        :root[data-theme="light"] .bg-slate-900 { background-color: #fff !important; }
+        :root[data-theme="light"] .bg-slate-800 { background-color: #e2e8f0 !important; }
+        :root[data-theme="light"] .bg-slate-700 { background-color: #cbd5e1 !important; }
+        :root[data-theme="light"] .bg-slate-950 { background-color: #f8fafc !important; }
+        :root[data-theme="light"] .border-slate-700,
+        :root[data-theme="light"] .border-slate-600 { border-color: #cbd5e1 !important; }
+        :root[data-theme="light"] .text-white,
+        :root[data-theme="light"] .text-slate-100,
+        :root[data-theme="light"] .text-slate-200 { color: #0f172a !important; }
+        :root[data-theme="light"] .text-slate-300 { color: #334155 !important; }
+        :root[data-theme="light"] .text-slate-400 { color: #475569 !important; }
+        :root[data-theme="light"] .file\:bg-slate-700 { background-color: #cbd5e1 !important; }
+        :root[data-theme="light"] .file\:text-slate-100 { color: #0f172a !important; }
+        :root[data-theme="light"] .tp-pill { color: #334155; border-color: #94a3b8; }
+        :root[data-theme="light"] .tp-pill[aria-pressed="true"] { color: #fff; background: #059669; border-color: #059669; }
+        :root[data-theme="light"] #carte { background: #e2e8f0; }
+        .tp-input { width: 100%; background: var(--input); border: 1px solid var(--line); border-radius: 0.75rem;
+                    padding: 0.5rem 0.75rem; font-size: 0.875rem; color: var(--text); }
         .tp-input:focus { outline: none; border-color: #10b981; }
-        .tp-label { display: block; font-size: 0.75rem; font-weight: 500; color: #cbd5e1; margin-bottom: 0.25rem; }
-        .tp-card { background: #1e293b; border: 1px solid #334155; border-radius: 1rem; padding: 1.25rem; }
+        .tp-label { display: block; font-size: 0.75rem; font-weight: 500; color: var(--soft); margin-bottom: 0.25rem; }
+        .tp-card { background: var(--card); border: 1px solid var(--line); border-radius: 1rem; padding: 1.25rem; }
         .tp-table th, .tp-table td { padding: 0.375rem 0.5rem; text-align: right; white-space: nowrap; }
         .tp-table thead th { white-space: normal; vertical-align: bottom; }
         .tp-table th:first-child, .tp-table td:first-child { text-align: left; }
@@ -40,9 +62,9 @@
         .tp-map-icon-button:focus-visible { outline: 2px solid #6ee7b7; outline-offset: 2px; }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-full flex flex-col">
+    <body class="min-h-full flex flex-col">
 
-    <header class="bg-slate-800 border-b border-slate-700 px-4 md:px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-3">
+    <header class="tp-theme-surface border-b border-slate-700 px-4 md:px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-3">
         <div class="flex items-center space-x-3">
             <div class="bg-emerald-500 text-slate-950 p-2.5 rounded-xl flex items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -61,6 +83,10 @@
                 <button class="tp-pill tp-lang" data-lang="fr" aria-pressed="true" title="Français">FR</button>
                 <button class="tp-pill tp-lang" data-lang="en" aria-pressed="false" title="English">EN</button>
             </span>
+            <button id="btnTheme" class="tp-pill" type="button" aria-pressed="false" data-i18n-title="theme.light" aria-label="Mode clair" title="Mode clair">
+                <span id="themeIcon" aria-hidden="true">☀️</span>
+                <span id="themeLabel" data-i18n="theme.light">Mode clair</span>
+            </button>
         </div>
     </header>
 
@@ -197,7 +223,6 @@
                         <button class="tp-pill tp-couche" data-couche="pente" aria-pressed="false" data-i18n="map.btn.pente"></button>
                         <button class="tp-pill tp-couche" data-couche="ndvi" aria-pressed="false" data-i18n="map.btn.ndvi"></button>
                     </div>
-                    <span class="hidden sm:block w-px h-6 bg-slate-600" aria-hidden="true"></span>
                 </div>
             </div>
             <p id="carteSaison" class="text-sm text-slate-200 mb-3"></p>
@@ -218,6 +243,12 @@
                             <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/>
                         </svg>
                     </button>
+                    <button id="btnMaPosition" class="tp-map-icon-button" type="button" data-i18n-title="map.location" aria-label="Ma position" title="Ma position">
+                        <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="2.5"/>
+                            <path d="M12 2v3m0 14v3M2 12h3m14 0h3"/>
+                        </svg>
+                    </button>
                 </div>
             </div>
             <div id="carteLegende" class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-xs text-slate-300"></div>
@@ -229,7 +260,7 @@
         </section>
     </main>
 
-    <footer id="footer" class="bg-slate-800 border-t border-slate-700 text-center py-3 px-4 text-xs text-slate-400"></footer>
+    <footer id="footer" class="tp-theme-surface border-t border-slate-700 text-center py-3 px-4 text-xs text-slate-400"></footer>
 
 <!-- Application découpée en couches : Domain/Core, Data, Presentation -->
 <script src="src/core/config.js"></script>
