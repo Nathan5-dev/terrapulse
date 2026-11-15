@@ -114,6 +114,11 @@
                 fondDeCarte.setFond(b.dataset.fond);
                 fondDeCarte.rafraichir();
             }));
+            section.querySelectorAll('.tp-fond').forEach(b => {
+                const nom = b.dataset.fond;
+                b.title = i18n.t(`map.fond.${nom}`);
+                b.setAttribute('aria-label', i18n.t(`map.fond.${nom}`));
+            });
 
             etat.prete = true;
             rafraichirTextes();
