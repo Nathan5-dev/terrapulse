@@ -24,6 +24,12 @@
 
         function initialiser(C) {
             const section = dom.$('sectionCarte');
+            if (etat.prete && etat.carte) {
+                if (!C) return true;
+                etat.donnees = C;
+                rafraichirDonneesCarte(C);
+                return true;
+            }
             if (!C || typeof L === 'undefined') {
                 const msg = el('p', 'text-sm text-amber-200');
                 msg.dataset.i18n = !C ? 'map.nodata' : 'map.nolib';
@@ -45,6 +51,7 @@
             };
 
             const carte = L.map('carte', { preferCanvas: true, scrollWheelZoom: false, zoomSnap: 0.25 });
+            etat.carte = carte;
             fondDeCarte.setCarte(carte);
             carte.attributionControl.setPrefix('Leaflet');
 
@@ -169,6 +176,50 @@
             etat.prete = true;
             rafraichirTextes();
             return true;
+        }
+
+        function rafraichirDonneesCarte(C) {
+            const G = C.grille, R = C.rayon_sinusoidal;
+            const versLatLon = (x, y) => {
+                const lat = y / R;
+                return [lat * 180 / Math.PI, x / (R * Math.cos(lat)) * 180 / Math.PI];
+            };
+            for (const { poly } of etat.cellules) etat.carte.removeLayer(poly);
+            etat.cellules = [];
+            for (let p = 0; p < C.indice.length; p++) {
+                if (C.indice[p] === null) continue;
+                const row = Math.floor(p / G.ncols), col = p % G.ncols;
+                const x0 = G.xll + col * G.cs, x1 = x0 + G.cs;
+                const y1 = G.yll + (G.nrows - row) * G.cs, y0 = y1 - G.cs;
+                const coords = [versLatLon(x0, y1), versLatLon(x1, y1),
+                    versLatLon(x1, y0), versLatLon(x0, y0)];
+                const poly = L.polygon(coords, { stroke: false, fillOpacity: 0.72 }).addTo(etat.carte);
+                const [latC, lonC] = versLatLon(x0 + G.cs / 2, y0 + G.cs / 2);
+                poly.bindTooltip(() => {
+                    const box = el('div');
+                    const line = ([bold, rest]) => {
+                        const div = el('div');
+                        div.append(el('strong', '', bold), document.createTextNode(' ' + rest));
+                        box.append(div);
+                    };
+                    line(i18n.t('map.tip.indice', {
+                        v: fmt(C.indice[p], 2),
+                        c: i18n.t('layer.indice.classes')[classeDe('indice', C.indice[p])],
+                    }));
+                    line(i18n.t('map.tip.pente', { v: fmt(C.pente[p], 1) + '°' }));
+                    line(i18n.t('map.tip.ndvi', { v: fmt(C.ndvi[p], 2) }));
+                    line(i18n.t('map.tip.alt', { v: fmt(C.altitude[p], 0) + ' m' }));
+                    line(i18n.t('map.tip.pos', { lat: fmt(latC, 5) + '°', lon: fmt(lonC, 5) + '°' }));
+                    return box;
+                }, { sticky: true });
+                etat.cellules.push({ p, poly });
+            }
+            colorer();
+            if (etat.cellules.length) {
+                etat.carte.fitBounds(L.latLngBounds(etat.cellules.map(o => o.poly.getBounds())), {
+                    padding: [4, 4], animate: true, duration: 0.75,
+                });
+            }
         }
 
         /* Tout ce qui est texte dans la carte : refait au changement de langue. */
