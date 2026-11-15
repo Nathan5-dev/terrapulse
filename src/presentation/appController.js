@@ -26,8 +26,6 @@
             lierEvenements();
             sources.appliquerTextes();
             majBoutonTheme();
-            dom.$('dataRefreshStatus').textContent = i18n.t('data.refreshing');
-            dom.$('dataRefreshStatus').classList.remove('hidden');
             dataset = datasetRepository.load();
             const requeteActualisation = datasetRepository.refresh();
             if (core.dataset.aDesDonnees(dataset)) {
@@ -52,13 +50,7 @@
                 rendre();
                 cartePrete = carte.initialiser(donneesCarte);
                 if (cartePrete && donneesCarte) panneauxCarte.rendre(donneesCarte);
-                dom.$('dataRefreshStatus').textContent = i18n.t(
-                    refresh.updated ? 'data.refreshed' : 'data.refreshFailed',
-                    { reason: refresh.error || '', date: new Date().toLocaleDateString() });
             } catch (error) {
-                dom.$('dataRefreshStatus').textContent = i18n.t('data.refreshFailed', {
-                    reason: error && error.message ? error.message : 'API indisponible',
-                });
                 if (!core.dataset.aDesDonnees(dataset)) {
                     dom.$('noData').textContent = i18n.t('data.error', {
                         reason: error && error.message ? error.message : 'API indisponible',

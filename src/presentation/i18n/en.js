@@ -18,9 +18,6 @@
         'nodata': 'No data available. Start the server and check the API connection, or import a CSV file.',
         'data.loading': 'Loading local data…',
         'data.error': o => `No local data is available and refresh failed: ${o.reason}`,
-        'data.refreshing': 'Refreshing NASA data…',
-        'data.refreshed': o => `Data refreshed from APIs (${o.date}).`,
-        'data.refreshFailed': o => `Refresh failed (${o.reason}). Keeping the local data.`,
         'badge.none': 'No data loaded',
         'badge.csv': o => `Imported CSV: ${o.f}`,
 

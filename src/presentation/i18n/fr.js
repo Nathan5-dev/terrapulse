@@ -18,9 +18,6 @@
         'nodata': 'Aucune donnée disponible. Lancez le serveur et vérifiez la connexion aux API, ou importez un CSV.',
         'data.loading': 'Chargement des données locales…',
         'data.error': o => `Aucune donnée locale disponible et actualisation impossible : ${o.reason}`,
-        'data.refreshing': 'Actualisation des données NASA en cours…',
-        'data.refreshed': o => `Données actualisées depuis les API (${o.date}).`,
-        'data.refreshFailed': o => `Actualisation impossible (${o.reason}). Les données locales sont conservées.`,
         'badge.none': 'Aucune donnée chargée',
         'badge.csv': o => `CSV importé : ${o.f}`,
 
