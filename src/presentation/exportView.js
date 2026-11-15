@@ -12,6 +12,24 @@
         const { i18n, config, core, serializer, sources, dom } = options;
         const { VAR_KEYS } = config;
 
+        function justifier(doc, lignes, x, y, largeur, interligne) {
+            lignes.forEach((texte, index) => {
+                const derniere = index === lignes.length - 1;
+                if (derniere || texte.trim().length < 3) {
+                    doc.text(texte, x, y + index * interligne);
+                    return;
+                }
+                const mots = texte.trim().split(/\s+/);
+                const largeurMots = mots.reduce((total, mot) => total + doc.getTextWidth(mot), 0);
+                const espacementMots = (largeur - largeurMots) / Math.max(1, mots.length - 1);
+                let curseur = x;
+                mots.forEach((mot, i) => {
+                    doc.text(mot, curseur, y + index * interligne);
+                    curseur += doc.getTextWidth(mot) + (i < mots.length - 1 ? espacementMots : 0);
+                });
+            });
+        }
+
         function construireRapport(tableau, dataset, date) {
             return core.report.construireRapport({
                 tableau,
@@ -77,59 +95,95 @@
             const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
             const marge = 14, largeur = doc.internal.pageSize.getWidth();
             const hauteur = doc.internal.pageSize.getHeight();
+            const largeurTexte = largeur - marge * 2;
+            const espacement = 6;
+            let y = 18;
+            const sauterPageSiBesoin = hauteurBloc => {
+                if (y + hauteurBloc > hauteur - marge) { doc.addPage(); y = marge; }
+            };
             const titre = i18n.getLangue() === 'fr' ? 'Rapport TerraPulse — Bukavu' : 'TerraPulse report — Bukavu';
             const ligne = i18n.t('export.line2', {
                 zone: rapport.meta.zone, a: rapport.meta.periode[0], b: rapport.meta.periode[1],
                 g: i18n.t('gran.' + rapport.meta.pas_de_temps),
             });
 
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(18);
+            doc.setFont('times', 'bold');
+            doc.setFontSize(16);
             doc.text(titre, marge, 18);
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(9);
-            doc.text(ligne, marge, 25);
-            doc.text(`${rapport.observations.length} observations · ${rapport.previsions.length} ${i18n.getLangue() === 'fr' ? 'prévisions' : 'forecasts'}`, marge, 31);
+            y += espacement;
+            doc.setFont('times', 'normal');
+            doc.setFontSize(12);
+            doc.text(doc.splitTextToSize(ligne, largeurTexte), marge, y);
+            y += espacement;
+            doc.text(`${rapport.observations.length} observations · ${rapport.previsions.length} ${i18n.getLangue() === 'fr' ? 'prévisions' : 'forecasts'}`, marge, y);
+            y += espacement;
 
-            const graphiques = ['chartRain', 'chartHum', 'chartNdvi'].map(id => dom.$(id));
-            let y = 38;
-            for (const canvas of graphiques) {
+            const graphiques = [
+                { canvas: dom.$('chartRain'), titre: 'chart.precipitation', details: 'interpRain' },
+                { canvas: dom.$('chartHum'), titre: 'chart.humidity', details: 'interpHum' },
+                { canvas: dom.$('chartNdvi'), titre: 'chart.ndvi', details: 'interpNdvi' },
+            ];
+            for (const graphique of graphiques) {
+                const { canvas } = graphique;
+                const titre = i18n.t(graphique.titre);
+                const paragraphes = [...dom.$(graphique.details).querySelectorAll('p')]
+                    .map(p => p.innerText || p.textContent)
+                    .map(texte => texte.replace(/\s+/g, ' ').trim())
+                    .filter(Boolean);
+                const textes = paragraphes.length ? paragraphes : [i18n.t('interp.empty')];
+                doc.setFont('times', 'bold');
+                doc.setFontSize(14);
+                const lignesTitre = doc.splitTextToSize(titre, largeurTexte);
+                sauterPageSiBesoin(lignesTitre.length * espacement + 4);
+                doc.text(lignesTitre, marge, y);
+                y += lignesTitre.length * espacement;
                 const image = canvas.toDataURL('image/png', 1);
-                const w = largeur - marge * 2, h = Math.min(w * canvas.height / canvas.width, 62);
-                if (y + h > hauteur - marge) { doc.addPage(); y = marge; }
+                const w = largeurTexte, h = Math.min(w * canvas.height / canvas.width, 55);
+                sauterPageSiBesoin(h + espacement);
                 doc.addImage(image, 'PNG', marge, y, w, h);
-                y += h + 5;
+                y += h + espacement;
+                doc.setFont('times', 'normal');
+                doc.setFontSize(12);
+                for (const texte of textes) {
+                    const lignes = doc.splitTextToSize(texte, largeurTexte);
+                    const blocH = lignes.length * espacement;
+                    sauterPageSiBesoin(blocH);
+                    justifier(doc, lignes, marge, y, largeurTexte, espacement);
+                    y += blocH + espacement;
+                }
             }
 
             const carte = dom.$('carte');
             if (carte && global.html2canvas) {
                 try {
                     const imageCarte = await global.html2canvas(carte, { useCORS: true, backgroundColor: '#fff', scale: 1.5 });
-                    const w = largeur - marge * 2, h = Math.min(w * imageCarte.height / imageCarte.width, 90);
-                    if (y + h > hauteur - marge) { doc.addPage(); y = marge; }
-                    doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
-                    doc.text(i18n.t('map.title'), marge, y + 4);
-                    doc.addImage(imageCarte.toDataURL('image/png'), 'PNG', marge, y + 7, w, h);
-                    y += h + 12;
+                    const w = largeurTexte, h = Math.min(w * imageCarte.height / imageCarte.width, 90);
+                    doc.setFont('times', 'bold'); doc.setFontSize(14);
+                    sauterPageSiBesoin(14 + h + espacement);
+                    doc.text(i18n.t('map.title'), marge, y);
+                    y += espacement;
+                    doc.addImage(imageCarte.toDataURL('image/png'), 'PNG', marge, y, w, h);
+                    y += h + espacement;
                 } catch (e) { /* la capture carte peut échouer si le fond bloque le canvas */ }
             }
 
             doc.addPage();
-            doc.setFont('helvetica', 'bold'); doc.setFontSize(13);
-            doc.text(i18n.t('export.title'), marge, 18);
-            doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
+            y = 18;
+            doc.setFont('times', 'bold'); doc.setFontSize(14);
+            doc.text(i18n.t('export.title'), marge, y);
+            y += espacement;
+            doc.setFont('times', 'normal'); doc.setFontSize(12);
             const lignes = [
                 ...(rapport.meta.sources ? Object.entries(rapport.meta.sources).map(([k, v]) => `${k}: ${v}`) : []),
                 ...rapport.observations.map(o => `${o.periode} | ${o.precipitation_mm ?? '—'} mm | ${o.humidite_sol_pourcent ?? '—'} % | NDVI ${o.ndvi ?? '—'}`),
                 ...rapport.previsions.map(o => `${o.periode} | ${o.precipitation_mm ?? '—'} mm | ${o.humidite_sol_pourcent ?? '—'} % | NDVI ${o.ndvi ?? '—'} | ${o.risque_glissement} | ${o.risque_erosion}`),
             ];
-            y = 24;
             for (const texte of lignes) {
-                const retours = doc.splitTextToSize(texte, largeur - marge * 2);
-                const blocH = retours.length * 4;
-                if (y + blocH > hauteur - marge) { doc.addPage(); y = marge; }
-                doc.text(retours, marge, y);
-                y += blocH + 1;
+                const retours = doc.splitTextToSize(texte, largeurTexte);
+                const blocH = retours.length * espacement;
+                sauterPageSiBesoin(blocH);
+                justifier(doc, retours, marge, y, largeurTexte, espacement);
+                y += blocH + espacement;
             }
             doc.save(nomFichier(rapport.meta, 'pdf'));
         }
