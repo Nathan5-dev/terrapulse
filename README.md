@@ -316,7 +316,7 @@ La carte décrit la vulnérabilité du terrain à l'érosion et aux glissements 
 
 ### L'export
 
-Deux boutons téléchargent les données filtrées au pas de temps affiché, suivies des prévisions (valeur centrale, bornes, probabilités, niveaux de risque). Le fichier contient les sources NASA, la période et les seuils utilisés.
+Les exports CSV et JSON téléchargent les données filtrées au pas de temps affiché, suivies des prévisions (valeur centrale, bornes, probabilités, niveaux de risque). L'export PDF rassemble ces données, les graphiques et une image de la carte. Les fichiers contiennent aussi les sources NASA, la période et les seuils utilisés.
 
 ### Importer un autre fichier
 
