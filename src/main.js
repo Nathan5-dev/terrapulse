@@ -1,7 +1,7 @@
 /*
  * TerraPulse - composition root (Presentation).
  * Seul fichier qui connaît toutes les couches et assemble l'application.
- * Scripts classiques (pas de modules ES) pour rester compatible avec file://.
+ * Scripts classiques (pas de modules ES), données locales avec actualisation API.
  */
 (function (global) {
     'use strict';

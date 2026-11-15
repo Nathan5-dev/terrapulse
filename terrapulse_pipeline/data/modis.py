@@ -21,12 +21,13 @@ def fetch_dates(config):
     ]
 
 
-def download_batches(config, dates, bands=NDVI_BANDS):
-    """Télécharge les composites par lots de 10, avec cache local.
+def download_batches(config, dates, bands=NDVI_BANDS, use_cache=True, refresh=False):
+    """Télécharge les composites par lots de 10, avec cache facultatif.
 
     Retourne {bande: {date: [valeurs par pixel]}}.
     """
-    ensure_dir(config.MODIS_CACHE)
+    if use_cache:
+        ensure_dir(config.MODIS_CACHE)
     cache_dir = Path(config.MODIS_CACHE)
 
     def download_batch(args):
@@ -36,7 +37,7 @@ def download_batches(config, dates, bands=NDVI_BANDS):
             f"_{config.LAT}_{config.LON}_{config.KM_AROUND}.json"
         )
         path = cache_dir / filename
-        if path.exists():
+        if use_cache and not refresh and path.exists():
             with path.open(encoding="utf-8") as handle:
                 return band, json.load(handle)
 
@@ -49,8 +50,9 @@ def download_batches(config, dates, bands=NDVI_BANDS):
             subset["calendar_date"]: subset["data"]
             for subset in get_json(url)["subset"]
         }
-        with path.open("w", encoding="utf-8") as handle:
-            json.dump(result, handle)
+        if use_cache:
+            with path.open("w", encoding="utf-8") as handle:
+                json.dump(result, handle)
         return band, result
 
     tasks = [

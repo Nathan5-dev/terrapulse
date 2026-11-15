@@ -15,7 +15,9 @@
         'filter.horizon': 'Horizon de prévision', 'filter.h3': '3 mois', 'filter.h6': '6 mois', 'filter.h12': '12 mois',
         'filter.note.month': 'Les prévisions (pointillés et bande) prolongent chaque courbe.',
         'filter.note.other': 'Les prévisions sont mensuelles : elles s\'affichent sur les graphiques au pas « Par mois » et restent visibles dans le tableau.',
-        'nodata': 'Aucune donnée chargée. Lancez « python telecharger_donnees_nasa.py » dans ce dossier pour télécharger les données NASA, ou importez un fichier CSV ci-dessous.',
+        'nodata': 'Aucune donnée disponible. Lancez le serveur et vérifiez la connexion aux API, ou importez un CSV.',
+        'data.loading': 'Chargement des données locales…',
+        'data.error': o => `Aucune donnée locale disponible et actualisation impossible : ${o.reason}`,
         'badge.none': 'Aucune donnée chargée',
         'badge.csv': o => `CSV importé : ${o.f}`,
 
@@ -154,7 +156,7 @@
         'map.where': 'Où agir en priorité. ',
         'map.season.none': 'Aucun mois de la prévision n\'atteint la vigilance glissement de terrain. Les zones foncées restent celles à surveiller dès le retour des fortes pluies.',
         'map.season': o => `La prévision place ${o.m} au niveau « ${o.l} » pour les glissements de terrain. Ces mois-là, les zones les plus foncées de la carte sont à inspecter en premier.`,
-        'map.nodata': 'Carte indisponible : relancez telecharger_donnees_nasa.py pour générer les données de relief.',
+        'map.nodata': 'Carte indisponible dans les données locales. Une actualisation API peut la rétablir.',
         'map.nolib': 'Carte indisponible : la bibliothèque cartographique n\'a pas pu être chargée (connexion internet requise).',
     };
 })(window);

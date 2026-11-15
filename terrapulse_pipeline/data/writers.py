@@ -53,8 +53,8 @@ def _write_csv(path, header, rows):
         writer.writerows(rows)
 
 
-def _write_app_data(path, config, days, composites, map_data):
-    data = {
+def build_app_data(config, days, composites, map_data):
+    return {
         "meta": {
             "genere_le": dt.date.today().isoformat(),
             "zone": "Bukavu / Lac Kivu (RDC)",
@@ -72,6 +72,10 @@ def _write_app_data(path, config, days, composites, map_data):
         "ndvi": [[composite[0], composite[1]] for composite in composites],
         "carte": map_data,
     }
+
+
+def _write_app_data(path, config, days, composites, map_data):
+    data = build_app_data(config, days, composites, map_data)
 
     with Path(path).open("w", encoding="utf-8") as handle:
         handle.write("// Généré par telecharger_donnees_nasa.py - ne pas modifier à la main.\n")

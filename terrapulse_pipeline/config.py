@@ -3,10 +3,12 @@
 Aucune logique métier ici : uniquement des constantes, des URLs et des chemins.
 """
 from pathlib import Path
+import datetime as dt
 
 # ---------------- Zone et période ----------------
 LAT, LON = -2.51, 28.85          # Centre de Bukavu
-START_DATE, END_DATE = "2021-01-01", "2025-12-31"
+# MOD13Q1/Terra commence le 18 février 2000 ; début commun pour les trois variables.
+START_DATE, END_DATE = "2000-02-18", dt.date.today().isoformat()
 KM_AROUND = 5                    # Fenêtre NDVI : 5 km de chaque côté (~10 x 10 km)
 WATER_THRESHOLD = 0.10           # Pixel dont le NDVI médian est < 0.10 = lac, exclu
 REGION = "Bukavu_Kivu"
@@ -26,12 +28,17 @@ MAP_CACHE = BASE_DIR / "cache_carte"
 SUFFIX = f"{START_DATE[:4]}_{END_DATE[:4]}"
 
 # ---------------- Sources ----------------
-POWER_URL = (
-    "https://power.larc.nasa.gov/api/temporal/daily/point"
-    "?parameters=PRECTOTCORR,GWETTOP,GWETROOT&community=AG"
-    f"&longitude={LON}&latitude={LAT}"
-    f"&start={START_DATE.replace('-', '')}&end={END_DATE.replace('-', '')}&format=JSON"
-)
+def power_url(end_date=None):
+    end_date = end_date or END_DATE
+    return (
+        "https://power.larc.nasa.gov/api/temporal/daily/point"
+        "?parameters=PRECTOTCORR,GWETTOP,GWETROOT&community=AG"
+        f"&longitude={LON}&latitude={LAT}"
+        f"&start={START_DATE.replace('-', '')}&end={end_date.replace('-', '')}&format=JSON"
+    )
+
+
+POWER_URL = power_url()
 MODIS_BASE = "https://modis.ornl.gov/rst/api/v1/MOD13Q1"
 SRTM_URL = "https://s3.amazonaws.com/elevation-tiles-prod/skadi/{prefix}/{name}.hgt.gz"
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
