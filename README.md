@@ -10,24 +10,17 @@ TerraPulse transforme des données d'observation de la Terre de la NASA en infor
 
 ## Quel fichier ouvrir ?
 
-Le dossier contient deux fichiers HTML. **Un seul est l'application.**
-
-| Fichier | À utiliser ? | Pourquoi |
-| --- | --- | --- |
-| **`terrapulse_environmental_intelligence.html`** | **Oui, c'est le fichier principal** | Application complète : données NASA réelles, prévisions, carte, français et anglais |
-| `terrapulse_v1_donnees_simulees.html` | Non | Première version, conservée pour mémoire. Ses chiffres sont aléatoires : ne pas la présenter. |
+Le fichier **`index.html`** est l'application : il s'ouvre directement dans un navigateur et sert aussi de page d'accueil si le dossier est publié sur GitHub Pages.
 
 Pour lancer TerraPulse :
 
-1. Double-cliquez sur **`terrapulse_environmental_intelligence.html`** : il s'ouvre dans votre navigateur.
+1. Double-cliquez sur **`index.html`** : il s'ouvre dans votre navigateur.
 2. Laissez `terrapulse_data.js` dans le même dossier : c'est lui qui contient les données.
 3. Gardez une connexion internet, pour le fond de carte et les bibliothèques d'affichage.
 
 Il n'y a rien à installer ni à démarrer. Le script Python `telecharger_donnees_nasa.py` ne sert qu'à **mettre à jour les données** ; l'application fonctionne sans le relancer.
 
-Si vous n'avez plus besoin de l'ancienne version, vous pouvez supprimer `terrapulse_v1_donnees_simulees.html` sans aucun effet sur l'application.
-
-> **English quick start.** Open `terrapulse_environmental_intelligence.html` in a browser (keep `terrapulse_data.js` next to it) and click **EN** in the top-right corner. The other HTML file is an obsolete prototype with simulated numbers. To refresh the NASA data, run `python telecharger_donnees_nasa.py`.
+> **English quick start.** Open `index.html` in a browser (keep `terrapulse_data.js` next to it) and click **EN** in the top-right corner. To refresh the NASA data, run `python telecharger_donnees_nasa.py`.
 
 ---
 
@@ -58,7 +51,7 @@ Les quatre piliers du projet correspondent ainsi à :
 
 | Fichier | Rôle |
 | --- | --- |
-| `terrapulse_environmental_intelligence.html` | **L'application, fichier principal.** À ouvrir dans un navigateur. |
+| `index.html` | **L'application, fichier principal.** À ouvrir dans un navigateur. |
 | `terrapulse_data.js` | Les données NASA lues par l'application. Généré par le script, ne pas modifier à la main. |
 | `telecharger_donnees_nasa.py` | Le script qui télécharge les données NASA et produit les fichiers ci-dessous. |
 | `bukavu_terrapulse_nasa_2021_2025.csv` | Données mensuelles (pluie, humidité, NDVI). |
@@ -66,9 +59,8 @@ Les quatre piliers du projet correspondent ainsi à :
 | `bukavu_terrapulse_nasa_ndvi_16j_2021_2025.csv` | NDVI, une valeur tous les 16 jours. |
 | `cache_modis/` | Réponses brutes du serveur MODIS, conservées pour ne pas tout retélécharger. |
 | `cache_carte/` | Relief SRTM (15 Mo), grille des cellules et limites des communes, conservés de la même façon. |
-| `terrapulse_v1_donnees_simulees.html` | Ancienne version de l'application (données aléatoires). Gardée pour mémoire, à ne pas ouvrir pour une démonstration. |
 | `TerraPulse.ipynb` | Ancien notebook Colab. Sa seconde cellule fabriquait des données **simulées** : ne plus l'utiliser comme source. |
-| `TerraPulse - Code & prompt.pdf`, `gemini-code-*.md` | Cahier des charges et feuille de route du projet. |
+| `gemini-code-*.md` | Feuille de route du projet. |
 
 ---
 
@@ -76,7 +68,7 @@ Les quatre piliers du projet correspondent ainsi à :
 
 ### Ouvrir l'application
 
-Double-cliquez sur `terrapulse_environmental_intelligence.html` (voir « Quel fichier ouvrir ? » en haut de ce document). Il faut que `terrapulse_data.js` soit dans le même dossier, et une connexion internet pour charger les bibliothèques d'affichage (Tailwind CSS, Chart.js, Leaflet) et le fond de carte OpenStreetMap.
+Double-cliquez sur `index.html` (voir « Quel fichier ouvrir ? » en haut de ce document). Il faut que `terrapulse_data.js` soit dans le même dossier, et une connexion internet pour charger les bibliothèques d'affichage (Tailwind CSS, Chart.js, Leaflet) et le fond de carte OpenStreetMap.
 
 ### Mettre à jour les données
 
