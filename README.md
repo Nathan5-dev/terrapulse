@@ -205,17 +205,60 @@ Les prévisions étant mensuelles, elles ne s'affichent sur les graphiques qu'au
 
 ### Les interprétations
 
-Sous chaque graphique, deux paragraphes sont recalculés à chaque changement de filtre :
+Sous chaque graphique, trois paragraphes sont recalculés à chaque changement de filtre :
 
 - **Lecture de la courbe** : moyenne, maximum, minimum, nombre de mois au-delà du seuil, et tendance de fond avec sa marge d'erreur.
 - **Impact pour le Kivu** : ce que cela signifie pour le ruissellement, la saturation des sols ou la tenue des versants.
+- **Modèle mathématique** : la série réellement modélisée et la formule d'estimation de la tendance.
+
+Le graphique peut être affiché au jour, à la semaine, au mois ou à l'année, mais le modèle travaille toujours sur des **mois complets** :
+
+| Variable | Série mensuelle `y(t)` |
+| --- | --- |
+| Précipitations | Cumul des jours du mois : `y(t) = Σ_{j∈mois t} P(j)`, en mm |
+| Humidité du sol | Moyenne des jours du mois : `y(t) = (1/n_t)·Σ_{j∈mois t} H(j)`, en % |
+| NDVI | Moyenne des composites de 16 jours du mois : `y(t) = (1/n_t)·Σ_{j∈mois t} N(j)` |
+
+La tendance est estimée par **moindres carrés ordinaires** avec le modèle saisonnier suivant :
+
+> **Valeur modélisée**<br>
+> `y(t) = Σₘ βₘ × 1[mois(t) = m] + γ × (t − t̄) + ε(t)`
+
+- `t` est l'indice absolu du mois, `t̄` sa moyenne sur la période.
+- `β_m` est le niveau moyen du mois calendaire `m`.
+- `γ` est la pente mensuelle ; elle est affichée ×12 pour être exprimée par an.
+- `ε(t)` est l'écart résiduel.
+
+Le modèle n'a pas de constante séparée : les douze coefficients mensuels `β_m` jouent ce rôle. La tendance `γ` n'est conservée que si elle est statistiquement nette, c'est-à-dire si **`|γ| > 2·SE(γ)`**. Sinon, l'application réajuste le modèle sans tendance (`γ = 0`) et la prévision se réduit aux moyennes mensuelles.
 
 ### Le modèle de prévision
 
-Pour chaque variable, le modèle estime par moindres carrés :
+Le modèle est le même pour les trois variables et produit des prévisions **mensuelles**, pas journalières : les jours à venir sont regroupés en mois. Pour chaque horizon `h = 1…H` (`H` = 3, 6 ou 12 mois), la valeur centrale prévue est :
 
-- une **valeur typique pour chaque mois de l'année** (le cycle des saisons) ;
-- une **tendance linéaire** de fond.
+> **Valeur prévue**<br>
+> `ŷ(T + h) = Σₘ βₘ × 1[mois(T + h) = m] + γ × (T + h − t̄)`
+
+où `T` est le dernier mois observé. Les coefficients `β_m` et `γ` sont ceux appris sur les mois complets de la période sélectionnée.
+
+L'incertitude vient de l'erreur de prévision :
+
+> **Erreur et intervalle de prévision**<br>
+> `SE = √(σ̂² × (1 + x₀ᵀ × (XᵀX)⁻¹ × x₀))`, avec `σ̂² = RSS / (n − p)`<br>
+> `IC₈₀ = ŷ ± 1,30 × SE`
+
+- `x₀` est le vecteur du mois à prévoir : douze indicatrices mensuelles et, si elle est retenue, la tendance centrée.
+- `n` est le nombre de mois utilisés, `p = 13` avec tendance (12 mois + pente) ou `12` sans.
+- `RSS` est la somme des carrés des résidus.
+- `1,30` est le quantile de Student à 80 % pour environ 45 degrés de liberté.
+
+Les probabilités de dépassement supposent des écarts normalement distribués :
+
+> **Probabilités de dépasser un seuil**<br>
+> `P(pluie > s) = 1 − Φ((s − ŷ) / SE)`<br>
+> `P(humidité > s) = 1 − Φ((s − ŷ) / SE)`<br>
+> `P(NDVI < s) = Φ((s − ŷ) / SE)`
+
+`Φ` est la fonction de répartition de la loi normale centrée réduite, approchée par la méthode d'Abramowitz et Stegun. Ces probabilités restent approximatives pour la pluie, dont la distribution est asymétrique.
 
 Deux précautions sont intégrées :
 
@@ -247,7 +290,7 @@ La zone de 10 km sur 10 km est découpée en cellules de 231 m (la grille du sat
 
 - la **pente moyenne**, à partir du relief SRTM à 30 m ;
 - le **NDVI moyen des 12 derniers mois** de la période ;
-- un **indice de vulnérabilité** de 0 à 1 qui combine les deux.
+- un **indice de vulnérabilité** de 0 à 1 qui combine les deux, pour estimer la sensibilité du terrain à l'érosion et aux glissements de terrain.
 
 ```
 indice = score de pente × (0,5 + 0,5 × manque de végétation)
@@ -257,7 +300,7 @@ indice = score de pente × (0,5 + 0,5 × manque de végétation)
 - Le manque de végétation vaut 0 pour un NDVI d'au moins 0,60 et 1 pour un NDVI de 0,30 ou moins.
 - Une pente forte bien boisée obtient donc 0,5 ; la même pente nue obtient 1.
 
-Trois boutons changent la couche affichée : vulnérabilité, pente ou végétation. Deux autres boutons changent le fond : **Plan** (carte topographique claire) ou **Satellite** (imagerie aérienne). Au survol, chaque cellule donne ses valeurs et son altitude. Le lac Kivu est exclu (cellules sans végétation, ou planes à l'altitude du lac).
+Trois boutons changent la couche affichée : vulnérabilité, pente ou végétation. Deux autres boutons changent le fond : **Plan** (carte topographique claire) ou **Satellite** (imagerie aérienne). Au survol, chaque cellule donne son indice de vulnérabilité à l'érosion et aux glissements de terrain, sa pente moyenne, son NDVI, son altitude et ses coordonnées latitude / longitude. Le lac Kivu est exclu (cellules sans végétation, ou planes à l'altitude du lac).
 
 Sous la carte, un tableau compare les trois communes. Résultats actuels :
 
@@ -269,7 +312,7 @@ Sous la carte, un tableau compare les trois communes. Résultats actuels :
 
 Bagira est la plus pentue mais reste mieux végétalisée, ce qui abaisse son indice ; Kadutu et Ibanda cumulent pentes et faible couvert végétal.
 
-La carte décrit le terrain, pas la météo : elle ne change pas avec les filtres de dates. Une phrase au-dessus d'elle rappelle les mois que la prévision place en vigilance, pour relier le « quand » au « où ».
+La carte décrit la vulnérabilité du terrain à l'érosion et aux glissements de terrain, pas la météo : elle ne change pas avec les filtres de dates. Une phrase au-dessus d'elle rappelle les mois que la prévision place en vigilance, pour relier le « quand » au « où ».
 
 ### L'export
 

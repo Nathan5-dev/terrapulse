@@ -12,12 +12,35 @@
         const { fmt, pct } = formatter;
         const { el } = dom;
 
+        function rendreModele(prev) {
+            const cible = dom.$('modelFormula');
+            if (!cible) return;
+            dom.vider(cible);
+            cible.classList.toggle('hidden', !prev.mois.length);
+            if (!prev.mois.length) return;
+
+            cible.append(el('p', 'font-semibold text-slate-100', i18n.t('fc.model.title')));
+            for (const [index, formule] of i18n.t('fc.model.formulas').entries()) {
+                const bloc = el('div', 'mt-2 rounded-lg bg-slate-800 px-3 py-2');
+                bloc.append(
+                    el('p', 'text-[10px] font-semibold uppercase tracking-wide text-slate-400',
+                        i18n.t(`fc.model.formula.${index}`)),
+                    el('p', 'mt-1 overflow-x-auto font-mono text-xs sm:text-sm text-emerald-200 whitespace-pre', formule),
+                );
+                cible.append(bloc);
+            }
+            for (const note of i18n.t('fc.model.notes')) {
+                cible.append(el('p', 'text-[11px] text-slate-400 mt-1', note));
+            }
+        }
+
         function rendrePrevision(prev) {
             const table = dom.$('forecastTable');
             dom.vider(table);
             dom.$('modelNote').textContent = prev.mois.length
                 ? i18n.t('fc.note', { n: prev.modeles.precipitation.n })
                 : '';
+            rendreModele(prev);
             if (!prev.mois.length) return;
 
             const thead = el('thead'), trh = el('tr');
