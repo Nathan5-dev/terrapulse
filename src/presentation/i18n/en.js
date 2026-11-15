@@ -9,6 +9,7 @@
     TP.i18nDictionaries.en = {
         locale: 'en-US',
         'header.zone': 'Area: Bukavu / Lake Kivu',
+        'theme.light': 'Light mode', 'theme.dark': 'Dark mode',
         'filter.start': 'Start date', 'filter.end': 'End date', 'filter.step': 'Time step',
         'filter.step.day': 'Daily', 'filter.step.week': 'Weekly', 'filter.step.month': 'Monthly', 'filter.step.year': 'Yearly',
         'filter.horizon': 'Forecast horizon', 'filter.h3': '3 months', 'filter.h6': '6 months', 'filter.h12': '12 months',
@@ -144,6 +145,8 @@
         'map.src.ndvi': 'NASA MODIS/Terra MOD13Q1 v6.1, mean per 231 m cell — https://doi.org/10.5067/MODIS/MOD13Q1.061',
         'map.src.communes': 'Administrative boundaries © OpenStreetMap contributors (ODbL), via Nominatim',
         'map.fond.plan': 'Map', 'map.fond.satellite': 'Satellite',
+        'map.location': 'Center on my location',
+        'map.location.error': 'Location unavailable. Check your browser geolocation permissions.',
         'map.attrib.plan': 'Basemap &copy; Esri, HERE, Garmin, USGS, &copy; OpenStreetMap contributors',
         'map.attrib.satellite': 'Imagery &copy; Esri, Vantor, Earthstar Geographics, and the GIS User Community',
         'map.where': 'Where to act first. ',

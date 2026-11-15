@@ -9,6 +9,7 @@
     TP.i18nDictionaries.fr = {
         locale: 'fr-FR',
         'header.zone': 'Zone : Bukavu / Lac Kivu',
+        'theme.light': 'Mode clair', 'theme.dark': 'Mode sombre',
         'filter.start': 'Date de début', 'filter.end': 'Date de fin', 'filter.step': 'Pas de temps',
         'filter.step.day': 'Par jour', 'filter.step.week': 'Par semaine', 'filter.step.month': 'Par mois', 'filter.step.year': 'Par année',
         'filter.horizon': 'Horizon de prévision', 'filter.h3': '3 mois', 'filter.h6': '6 mois', 'filter.h12': '12 mois',
@@ -144,6 +145,8 @@
         'map.src.ndvi': 'NASA MODIS/Terra MOD13Q1 v6.1, moyenne par cellule de 231 m — https://doi.org/10.5067/MODIS/MOD13Q1.061',
         'map.src.communes': 'Limites administratives © contributeurs OpenStreetMap (ODbL), via Nominatim',
         'map.fond.plan': 'Plan', 'map.fond.satellite': 'Satellite',
+        'map.location': 'Centrer sur ma position',
+        'map.location.error': 'Position indisponible. Vérifiez les autorisations de géolocalisation du navigateur.',
         'map.attrib.plan': 'Fond de carte &copy; Esri, HERE, Garmin, USGS, &copy; contributeurs OpenStreetMap',
         'map.attrib.satellite': 'Imagerie &copy; Esri, Vantor, Earthstar Geographics, et la communauté SIG',
         'map.where': 'Où agir en priorité. ',
