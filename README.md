@@ -10,25 +10,29 @@ TerraPulse transforme des données d'observation de la Terre de la NASA en infor
 
 ## Quel fichier ouvrir ?
 
-Le fichier **`index.html`** est l'application : il s'ouvre directement dans un navigateur et sert aussi de page d'accueil si le dossier est publié sur GitHub Pages.
+Le fichier **`index.html`** est l'application. Elle démarre avec le jeu local `terrapulse_data.js`, puis tente de l'actualiser via les API.
 
 Pour lancer TerraPulse :
 
-1. Double-cliquez sur **`index.html`** : il s'ouvre dans votre navigateur.
-2. Laissez `terrapulse_data.js` dans le même dossier : c'est lui qui contient les données.
-3. Gardez une connexion internet, pour le fond de carte et les bibliothèques d'affichage.
+1. Lancez `python3 serve_terrapulse.py` dans le dossier du projet.
+2. Ouvrez **http://127.0.0.1:8000** dans votre navigateur.
+3. Gardez une connexion internet pour l'actualisation API, les bibliothèques et le fond de carte.
 
 Le fond de carte vient d'**Esri** et propose deux vues : **Plan** (carte claire) et **Satellite** (imagerie). Aucune clé ni aucun compte n'est nécessaire. Les tuiles standard de `tile.openstreetmap.org` ne sont volontairement pas utilisées, car ce service refuse les pages ouvertes en `file://` (aucun en-tête `Referer` n'est envoyé) et interdit l'usage de ses tuiles par une application distribuée.
 
-Il n'y a rien à installer ni à démarrer. Le pipeline Python `telecharger_donnees_nasa.py` ne sert qu'à **mettre à jour les données** ; l'application fonctionne sans le relancer.
+À chaque ouverture/rechargement, le site affiche d'abord les données locales, puis le serveur interroge NASA POWER, MODIS/ORNL, SRTM et Nominatim. En cas de succès, il met à jour `terrapulse_data.js` et l'application ; en cas d'échec, les données locales restent disponibles et le site signale l'échec. Le chargement initial de la page reste possible hors ligne.
 
-> **English quick start.** Open `index.html` in a browser (keep `terrapulse_data.js` next to it) and click **EN** in the top-right corner. To refresh the NASA data, run `python telecharger_donnees_nasa.py`.
+Dernier jeu local vérifié : données NASA POWER et MODIS du 18 février 2000 au 15 novembre 2026. MODIS fournit 614 dates pour chacune de ses bandes ; 607 composites NDVI sont exploitables après filtrage de qualité. POWER compte 9 768 jours, dont 3 sans valeur pour la pluie et l’humidité.
+
+L'historique commence à la première date disponible du produit MODIS/Terra (18 février 2000). L'actualisation peut prendre plusieurs minutes ; les caches de téléchargement accélèrent les rechargements suivants.
+
+> **English quick start.** Run `python3 serve_terrapulse.py`, open `http://127.0.0.1:8000` and click **EN**. The app loads its local dataset first, then refreshes it from APIs when available.
 
 ---
 
 ## 1. Ce que fait le projet, en bref
 
-1. Un pipeline Python télécharge trois variables réelles pour Bukavu, de 2021 à 2025 : la pluie, l'humidité du sol et l'état de la végétation (NDVI).
+1. Le serveur actualise depuis les API trois variables réelles à Bukavu. L'historique commence au 18 février 2000, première date disponible pour MODIS/Terra, et va jusqu'à la date de l'actualisation.
 2. Une page web affiche l'évolution de ces trois variables, au pas de temps choisi (jour, semaine, mois ou année).
 3. Sous chaque graphique, la page explique ce que montre la courbe et ce que cela implique pour les versants de Bukavu.
 4. Un modèle statistique apprend le cycle des saisons sur l'historique et prévoit les 3, 6 ou 12 mois suivants, avec une marge d'incertitude.
@@ -53,16 +57,16 @@ Les quatre piliers du projet correspondent ainsi à :
 
 | Fichier | Rôle |
 | --- | --- |
-| `index.html` | **L'application, fichier principal.** Structure de la page et chargement des scripts. À ouvrir dans un navigateur. |
+| `index.html` | **L'application, fichier principal.** Structure de la page et chargement des scripts. Utiliser le serveur local. |
 | `src/` | Le code de l'application web, découpé en couches (`core`, `data`, `presentation`). |
-| `terrapulse_data.js` | Les données NASA lues par l'application. Généré par le pipeline, ne pas modifier à la main. |
-| `telecharger_donnees_nasa.py` | Point d'entrée du pipeline qui télécharge les données NASA et produit les fichiers ci-dessous. |
-| `terrapulse_pipeline/` | Le pipeline Python, découpé en couches (`domain`, `data`, `usecases`). |
-| `bukavu_terrapulse_nasa_2021_2025.csv` | Données mensuelles (pluie, humidité, NDVI). |
-| `bukavu_terrapulse_nasa_journalier_2021_2025.csv` | Pluie et humidité du sol, jour par jour. |
-| `bukavu_terrapulse_nasa_ndvi_16j_2021_2025.csv` | NDVI, une valeur tous les 16 jours. |
-| `cache_modis/` | Réponses brutes du serveur MODIS, conservées pour ne pas tout retélécharger. |
-| `cache_carte/` | Relief SRTM (15 Mo), grille des cellules et limites des communes, conservés de la même façon. |
+| `terrapulse_data.js` | Jeu local de secours et dernière copie actualisée des données NASA. |
+| `serve_terrapulse.py` | Serveur local du site et endpoint `/api/data`, qui tente l'actualisation à chaque chargement. |
+| `telecharger_donnees_nasa.py` | Outil pour générer ou exporter le jeu de données local. |
+| `terrapulse_pipeline/` | Adaptateurs API et transformations partagés par le site et l'outil d'export. |
+| `bukavu_terrapulse_nasa_2000_<année_actuelle>.csv` | Données mensuelles (pluie, humidité, NDVI). |
+| `bukavu_terrapulse_nasa_journalier_2000_<année_actuelle>.csv` | Pluie et humidité du sol, jour par jour. |
+| `bukavu_terrapulse_nasa_ndvi_16j_2000_<année_actuelle>.csv` | NDVI, une valeur tous les 16 jours. |
+| `cache_modis/`, `cache_carte/` | Réponses conservées pour accélérer les actualisations API suivantes. |
 | `TerraPulse.ipynb` | Ancien notebook Colab (archive, 179 lignes de code). Sa seconde cellule fabriquait des données **simulées** : ne plus l'utiliser comme source. |
 | `gemini-code-*.md` | Feuille de route du projet. |
 | `.gitignore` | Fichiers générés à ne pas versionner (`__pycache__`, `.pyc`). |
@@ -75,12 +79,12 @@ Les deux parties du projet suivent les mêmes règles : **les dépendances point
 
 ### Application web (`src/`)
 
-`index.html` ne contient plus que la structure HTML et les balises `<script>`. Les scripts sont **classiques** (pas de modules ES), chargés dans l'ordre et rangés sous l'espace de noms `window.TerraPulse` : c'est ce qui permet au double-clic `file://` de continuer à fonctionner, contrairement aux imports ES bloqués par les navigateurs.
+`index.html` contient la structure HTML et les balises `<script>`. Les scripts sont **classiques** (pas de modules ES), chargés dans l'ordre. `terrapulse_data.js` fournit les données de départ ; le serveur local tente de les actualiser via `/api/data`.
 
 | Couche | Dossier | Rôle |
 | --- | --- | --- |
 | **Domain / Core** | `src/core/` | Règles pures : dates, statistiques, agrégation, modèle saisonnier, analyse, seuils de la carte, rapport d'export. Aucun accès au DOM, à Leaflet ou à Chart.js. |
-| **Data** | `src/data/` | Adaptateurs : lecture de `terrapulse_data.js`, import CSV, sérialisation CSV/JSON. Ils implémentent les besoins du domaine. |
+| **Data** | `src/data/` | Adaptateurs : données NASA locales et actualisation API, import CSV manuel, sérialisation CSV/JSON. |
 | **Presentation** | `src/presentation/` | Traductions FR/EN, graphiques, carte, tableaux, diagnostic, filtres, exports, et le contrôleur qui orchestre le tout. |
 | **Composition** | `src/main.js` | Seul fichier qui connaît toutes les couches : il crée les objets et les relie (injection de dépendances). |
 
@@ -118,9 +122,9 @@ Le notebook `TerraPulse.ipynb` est une archive d'exploration : il contient 179 l
 
 ### Ouvrir l'application
 
-Double-cliquez sur `index.html` (voir « Quel fichier ouvrir ? » en haut de ce document). Il faut que `terrapulse_data.js` soit dans le même dossier, et une connexion internet pour charger les bibliothèques d'affichage (Tailwind CSS, Chart.js, Leaflet) et le fond de carte Esri.
+Lancez `python3 serve_terrapulse.py`, puis ouvrez `http://127.0.0.1:8000`. Sans réseau, le site utilise le jeu local ; une connexion internet active les API et les bibliothèques d'affichage (Tailwind CSS, Chart.js, Leaflet) et le fond de carte Esri.
 
-### Mettre à jour les données
+### Actualiser ou reconstruire le jeu local
 
 ```
 python telecharger_donnees_nasa.py
@@ -262,7 +266,7 @@ Les probabilités de dépassement supposent des écarts normalement distribués 
 
 Deux précautions sont intégrées :
 
-- **La tendance n'est utilisée dans la prévision que si elle est statistiquement nette** (plus de deux fois son erreur standard). Avec cinq ans de données, prolonger une pente incertaine donnerait des prévisions fausses.
+- **La tendance n'est utilisée dans la prévision que si elle est statistiquement nette** (plus de deux fois son erreur standard). Sur une période choisie, prolonger une pente incertaine donnerait des prévisions fausses.
 - **Il faut au moins 24 mois complets** dans la période choisie, sinon l'application refuse de prévoir et le dit.
 
 L'intervalle à 80 % vient de la dispersion des écarts entre le modèle et l'historique : huit fois sur dix, la valeur réelle devrait tomber dans la bande, si l'avenir ressemble au passé.
@@ -328,7 +332,7 @@ Le bas de la colonne de gauche permet de remplacer les données par un CSV mensu
 
 - **Les niveaux de risque ne sont pas validés.** Ils n'ont été comparés à aucun inventaire de glissements de terrain survenus à Bukavu. Ils indiquent des conditions favorables, pas une probabilité de catastrophe.
 - **Les seuils sont des hypothèses de travail**, pas des valeurs mesurées sur les sols de Bukavu.
-- **Cinq ans d'historique, c'est court.** Le modèle connaît les saisons, pas les années exceptionnelles (El Niño, dipôle de l'océan Indien).
+- **L'historique est long, mais les observations ne sont pas des mesures de terrain.** Les longues séries aident à représenter la variabilité saisonnière et interannuelle, sans remplacer des observations locales ni garantir la prévision des années exceptionnelles.
 - **Le modèle ne prévoit pas la météo.** Il prolonge la climatologie : il dira « mars est habituellement très arrosé », jamais « il pleuvra beaucoup en mars prochain ».
 - **Les probabilités supposent des écarts de loi normale**, ce qui est approximatif pour la pluie.
 - **La prévision est la même pour toute la ville.** La pluie et l'humidité n'ont qu'une valeur pour la zone ; seule la carte distingue les quartiers, et uniquement par la pente et la végétation.
@@ -346,14 +350,14 @@ Le bas de la colonne de gauche permet de remplacer les données par un CSV mensu
 1. **Valider contre des événements réels.** Rassembler les dates et les lieux des glissements et inondations connus à Bukavu (presse, protection civile, Croix-Rouge, travaux de l'Université Officielle de Bukavu et du Musée royal de l'Afrique centrale). Vérifier si le modèle signalait ces mois, et si la carte colorait ces lieux. Même dix événements changeraient la crédibilité du projet, et permettraient d'ajuster les paramètres de l'indice.
 2. **Affiner la carte.** Passer à des cellules de 30 m avec le NDVI de Landsat ou HLS (NASA), élargir la zone pour couvrir toute la ville, et ajouter les rivières et ravins, les routes et la densité de bâtiments d'OpenStreetMap pour estimer la population exposée.
 3. **Utiliser les satellites dédiés.** Remplacer la pluie par **GPM IMERG** (10 km) et l'humidité par **SMAP** (9 km). IMERG et MODIS sont disponibles sur Microsoft Planetary Computer ; SMAP demande un compte NASA Earthdata gratuit.
-4. **Allonger l'historique.** NASA POWER remonte à 1981 et MODIS à 2000. Passer à plus de 20 ans donnerait une vraie climatologie et permettrait de dire si une année est anormale.
+4. **Étendre les autres sources.** MODIS/Terra commence en 2000 ; NASA POWER remonte plus loin. Étudier une période antérieure pour pluie et humidité demanderait d'harmoniser les sources, car les trois séries n'auraient plus la même couverture.
 
 ### Priorité moyenne : mieux prévoir
 
 5. **Afficher les anomalies.** Montrer l'écart de chaque mois par rapport à la normale (par exemple « 40 % de pluie en plus que d'habitude »), plus parlant que la valeur brute.
 6. **Ajouter la pluie des jours précédents.** Les glissements dépendent surtout du cumul sur 3 à 30 jours et des pluies journalières extrêmes. Les données journalières sont déjà téléchargées : on peut compter les jours à plus de 30 mm et les cumuls glissants.
 7. **Intégrer les prévisions saisonnières.** Ajouter l'état d'El Niño et du dipôle de l'océan Indien, qui influencent les pluies d'Afrique de l'Est, ou les prévisions saisonnières publiques (NMME, C3S).
-8. **Tester le modèle honnêtement.** Entraîner sur 2021-2024, prévoir 2025, comparer au réel, et afficher l'erreur obtenue dans l'application.
+8. **Tester le modèle honnêtement.** Entraîner sur une période passée, prévoir une période tenue à l'écart, comparer au réel, et afficher l'erreur obtenue dans l'application.
 9. **Essayer un modèle d'apprentissage** (scikit-learn : forêt aléatoire ou gradient boosting) seulement après l'étape 8, pour vérifier qu'il fait mieux que le modèle saisonnier simple.
 
 ### Priorité moyenne : mieux servir les deux publics

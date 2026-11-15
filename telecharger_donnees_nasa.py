@@ -16,15 +16,15 @@ Sources (publiques, sans compte ni clé) :
 Usage :  python telecharger_donnees_nasa.py
 
 Fichiers produits (dans ce dossier) :
-  - terrapulse_data.js                               -> chargé par l'application web
-  - bukavu_terrapulse_nasa_2021_2025.csv             -> mensuel (format historique)
-  - bukavu_terrapulse_nasa_journalier_2021_2025.csv  -> pluie + humidité par jour
-  - bukavu_terrapulse_nasa_ndvi_16j_2021_2025.csv    -> NDVI par composite 16 jours
+  - terrapulse_data.js                               -> jeu local utilisé au démarrage du site
+  - bukavu_terrapulse_nasa_2000_<année_actuelle>.csv             -> mensuel
+  - bukavu_terrapulse_nasa_journalier_2000_<année_actuelle>.csv  -> pluie + humidité par jour
+  - bukavu_terrapulse_nasa_ndvi_16j_2000_<année_actuelle>.csv    -> NDVI par composite 16 jours
 
 L'implémentation est découpée en couches dans le paquet terrapulse_pipeline/
-(configuration, domain, data, usecases). Les réponses MODIS sont mises en cache
-dans cache_modis/, le relief et les communes dans cache_carte/ : une relance est
-rapide. Supprimez ces dossiers pour forcer un nouveau téléchargement.
+(configuration, domain, data, usecases). Cet outil d'export utilise les caches
+cache_modis/ et cache_carte/. Le site lit terrapulse_data.js au démarrage, puis
+le serveur tente de rafraîchir ce jeu local via les API.
 """
 from terrapulse_pipeline.cli import main
 

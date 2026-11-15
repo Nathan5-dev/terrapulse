@@ -4,10 +4,10 @@ from ..data.modis import NDVI_BANDS, download_batches, fetch_dates
 from ..domain.vegetation import build_composites, build_pixel_series, land_mask
 
 
-def load_vegetation(config):
+def load_vegetation(config, refresh=False):
     ensure_dir(config.MODIS_CACHE)
     dates = fetch_dates(config)
-    raw = download_batches(config, dates, NDVI_BANDS)
+    raw = download_batches(config, dates, NDVI_BANDS, refresh=refresh)
 
     ndvi_raw = raw[NDVI_BANDS[0]]
     reliability = raw[NDVI_BANDS[1]]

@@ -16,15 +16,14 @@ def _mean(values):
     return round(sum(values) / len(values), 3) if values else None
 
 
-def build_map(config, dates, ndvi_raw, reliability, land, pixel_count):
+def build_map(config, dates, ndvi_raw, reliability, land, pixel_count, use_cache=True, refresh=False):
     """Retourne le dictionnaire `carte` consommé par l'application web."""
-    ensure_dir(config.MAP_CACHE)
-
-    grid = cached_json(
-        config.MAP_CACHE,
-        f"grille_{config.LAT}_{config.LON}_{config.KM_AROUND}.json",
-        lambda: fetch_grid(config, dates[0]),
-    )
+    if use_cache:
+        ensure_dir(config.MAP_CACHE)
+    grid_factory = lambda: fetch_grid(config, dates[0])
+    grid = (grid_factory() if refresh or not use_cache else cached_json(
+        config.MAP_CACHE, f"grille_{config.LAT}_{config.LON}_{config.KM_AROUND}.json",
+        grid_factory))
     xll, yll, cs = grid["xll"], grid["yll"], grid["cs"]
     nrows, ncols = grid["nrows"], grid["ncols"]
     if nrows * ncols != pixel_count:
@@ -68,10 +67,8 @@ def build_map(config, dates, ndvi_raw, reliability, land, pixel_count):
     )
 
     try:
-        communes = cached_json(
-            config.MAP_CACHE, "communes.json",
-            lambda: fetch_communes(config),
-        )
+        communes = (fetch_communes(config) if refresh or not use_cache else
+                    cached_json(config.MAP_CACHE, "communes.json", lambda: fetch_communes(config)))
     except Exception as exc:  # noqa: BLE001
         print(f"   communes indisponibles ({exc}) : la carte sera tracée sans elles")
         communes = []

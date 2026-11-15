@@ -15,7 +15,12 @@
         'filter.horizon': 'Forecast horizon', 'filter.h3': '3 months', 'filter.h6': '6 months', 'filter.h12': '12 months',
         'filter.note.month': 'Forecasts (dashed line and band) extend each curve.',
         'filter.note.other': 'Forecasts are monthly: they appear on the charts at the “Monthly” time step and stay visible in the table.',
-        'nodata': 'No data loaded. Run “python telecharger_donnees_nasa.py” in this folder to download the NASA data, or import a CSV file below.',
+        'nodata': 'No data available. Start the server and check the API connection, or import a CSV file.',
+        'data.loading': 'Loading local data…',
+        'data.error': o => `No local data is available and refresh failed: ${o.reason}`,
+        'data.refreshing': 'Refreshing NASA data…',
+        'data.refreshed': o => `Data refreshed from APIs (${o.date}).`,
+        'data.refreshFailed': o => `Refresh failed (${o.reason}). Keeping the local data.`,
         'badge.none': 'No data loaded',
         'badge.csv': o => `Imported CSV: ${o.f}`,
 
@@ -154,7 +159,7 @@
         'map.where': 'Where to act first. ',
         'map.season.none': 'No forecast month reaches the landslide watch level. The darkest areas remain the ones to monitor as soon as heavy rain returns.',
         'map.season': o => `The forecast puts ${o.m} at the “${o.l}” level for landslides. In those months, the darkest areas of the map should be inspected first.`,
-        'map.nodata': 'Map unavailable: run telecharger_donnees_nasa.py again to generate the terrain data.',
+        'map.nodata': 'Map unavailable in the local dataset. An API refresh may restore it.',
         'map.nolib': 'Map unavailable: the mapping library could not be loaded (internet connection required).',
     };
 })(window);

@@ -19,22 +19,55 @@
         let donneesCarte = null;
         let cartePrete = false;
 
-        function demarrer() {
+        async function demarrer() {
             i18n.setLangue(i18n.langueInitiale(
                 global.location.hash, global.localStorage, global.navigator.language));
             appliquerTheme(lireTheme());
-
-            donneesCarte = datasetRepository.mapData ? datasetRepository.mapData() : null;
-            dataset = datasetRepository.load();
-
             lierEvenements();
             sources.appliquerTextes();
-            if (core.dataset.aDesDonnees(dataset)) initialiserFiltres();
-            sources.rendre(dataset);
-            rendre();
-
-            cartePrete = carte.initialiser(donneesCarte);
-            if (cartePrete && donneesCarte) panneauxCarte.rendre(donneesCarte);
+            majBoutonTheme();
+            dom.$('dataRefreshStatus').textContent = i18n.t('data.refreshing');
+            dom.$('dataRefreshStatus').classList.remove('hidden');
+            dataset = datasetRepository.load();
+            const requeteActualisation = datasetRepository.refresh();
+            if (core.dataset.aDesDonnees(dataset)) {
+                donneesCarte = datasetRepository.mapData ? datasetRepository.mapData() : null;
+                initialiserFiltres();
+                sources.rendre(dataset);
+                rendre();
+                cartePrete = carte.initialiser(donneesCarte);
+                if (cartePrete && donneesCarte) panneauxCarte.rendre(donneesCarte);
+            } else {
+                dataset = null;
+                dom.$('noData').textContent = i18n.t('data.loading');
+                dom.$('noData').classList.remove('hidden');
+            }
+            try {
+                const refresh = await requeteActualisation;
+                dataset = refresh && refresh.dataset;
+                if (!core.dataset.aDesDonnees(dataset)) throw new Error('aucune donnée disponible');
+                donneesCarte = datasetRepository.mapData ? datasetRepository.mapData() : null;
+                initialiserFiltres();
+                sources.rendre(dataset);
+                rendre();
+                cartePrete = carte.initialiser(donneesCarte);
+                if (cartePrete && donneesCarte) panneauxCarte.rendre(donneesCarte);
+                dom.$('dataRefreshStatus').textContent = i18n.t(
+                    refresh.updated ? 'data.refreshed' : 'data.refreshFailed',
+                    { reason: refresh.error || '', date: new Date().toLocaleDateString() });
+            } catch (error) {
+                dom.$('dataRefreshStatus').textContent = i18n.t('data.refreshFailed', {
+                    reason: error && error.message ? error.message : 'API indisponible',
+                });
+                if (!core.dataset.aDesDonnees(dataset)) {
+                    dom.$('noData').textContent = i18n.t('data.error', {
+                        reason: error && error.message ? error.message : 'API indisponible',
+                    });
+                    dom.$('noData').classList.remove('hidden');
+                    carte.initialiser(null);
+                }
+                return;
+            }
             majBoutonTheme();
         }
 
